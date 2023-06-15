@@ -15,7 +15,7 @@ package org.eclipse.daanse.mdx.model.api.expression;
 
 import java.util.List;
 
-public non-sealed interface CallExpression extends Expression {
+public /*non-sealed*/ interface CallExpression extends Expression {
 
     String name();
 

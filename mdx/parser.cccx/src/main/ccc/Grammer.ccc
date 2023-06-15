@@ -80,11 +80,9 @@ import org.eclipse.daanse.mdx.model.record.ReturnItemR;
 import org.eclipse.daanse.mdx.model.record.SelectStatementR;
 import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
 import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
-import org.eclipse.daanse.mdx.model.record.expression.FormulaExpressionR;
 import org.eclipse.daanse.mdx.model.record.expression.KeyObjectIdentifierR;
 import org.eclipse.daanse.mdx.model.record.expression.NullLiteralR;
 import org.eclipse.daanse.mdx.model.record.expression.NumericLiteralR;
-import org.eclipse.daanse.mdx.model.record.expression.StringLiteralR;
 import org.eclipse.daanse.mdx.model.record.expression.SymbolLiteralR;
 import org.eclipse.daanse.mdx.model.record.select.AxisR;
 import org.eclipse.daanse.mdx.model.record.select.CreateMemberBodyClauseR;
@@ -744,11 +742,12 @@ MemberPropertyDefinition parseMemberPropertyDefinition :
   }
 ;
 
+INJECT ASTFormulaExpression : implements org.eclipse.daanse.mdx.model.api.expression.FormulaExpression;
 
-FormulaExpression parseFormulaExpression :
+FormulaExpression parseFormulaExpression#FormulaExpression :
   parseIdentifier < EQ > parseIdentifier
   {
-    return new FormulaExpressionR();
+    return CURRENT_NODE;
   }
 ;
 
@@ -863,7 +862,7 @@ ObjectIdentifier parseIdentifier :
   }
 ;
 
-INJECT ASTNameObjectIdentifierNode :
+INJECT ASTNameObjectIdentifier :
 import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
 import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier.Quoting;
 implements NameObjectIdentifier
@@ -874,7 +873,7 @@ implements NameObjectIdentifier
   public String name() {return getName();}
 }
 
-NameObjectIdentifier parseNameObjectIdentifier#NameObjectIdentifierNode :
+NameObjectIdentifier parseNameObjectIdentifier#NameObjectIdentifier :
 {
   String id;
 }
@@ -922,20 +921,21 @@ KeyObjectIdentifier parseKeyIdentifier :
 ;
 
 
-NameObjectIdentifier parseAmpId#NameObjectIdentifierNode :
+NameObjectIdentifier parseAmpId#NameObjectIdentifier :
+ (
   < AMP_QUOTED_ID >
   {
     String name = MdxParserUtil.stripQuotes(getTokenImage(0), "&[", "]", "]]");
     CURRENT_NODE.setName(name);
     CURRENT_NODE.setQuoting(ObjectIdentifier.Quoting.QUOTED);
-    return CURRENT_NODE;
   }
   |
   < AMP_UNQUOTED_ID >
   {
     CURRENT_NODE.setName(getTokenImage(0).substring(1));
-    return CURRENT_NODE;
   }
+ )
+ {return CURRENT_NODE;}
 ;
 
 
@@ -1257,8 +1257,10 @@ Expression parseFactor :
   }
 ;
 
+INJECT ASTPrimaryExpression : implements org.eclipse.daanse.mdx.model.api.expression.Expression
 
-Expression parsePrimary :
+
+Expression parsePrimary#PrimaryExpression :
 {
   Expression expression;
 }
@@ -1267,7 +1269,7 @@ Expression parsePrimary :
     < DOT > expression = objectIdentifierOrFuncall(expression)
   )*
   {
-    return expression;
+    return CURRENT_NODE;
   }
 ;
 
@@ -1306,6 +1308,32 @@ NumericLiteral parseNumericLiteral :
   }
 ;
 
+INJECT ASTStringLiteral :
+   implements org.eclipse.daanse.mdx.model.api.expression.StringLiteral 
+{
+   @Property String value;
+   public String value() {
+      return getValue();
+   }
+
+   public void close() {
+      String image = getImage();
+      if (image.charAt(0) == '\'') 
+         value = PARSER_PACKAGE.MdxParserUtil.stripQuotes(image, "'", "'", "''");
+      else 
+         value = PARSER_PACKAGE.MdxParserUtil.stripQuotes(image, "\"", "\"", "\"\"");
+   }
+}
+
+Expression StringLiteral# :
+  (
+   <SINGLE_QUOTED_STRING>
+   |
+   <DOUBLE_QUOTED_STRING>
+  )
+  {return CURRENT_NODE;}
+;   
+
 
 Expression parseAtom :
 {
@@ -1313,15 +1341,9 @@ Expression parseAtom :
   NameObjectIdentifier nameObjectIdentifier;
   List < Expression > expressions;
 }
-  < SINGLE_QUOTED_STRING >
-  {
-    return new StringLiteralR(MdxParserUtil.stripQuotes(getToken(0).getImage(), "'", "'", "''"));
-  }
-| < DOUBLE_QUOTED_STRING >
-  {
-    return new StringLiteralR(MdxParserUtil.stripQuotes(getToken(0).getImage(), '"' + "", '"' + "", '"' + "" + '"'));
-  }
-| expression = parseNumericLiteral
+  expression=StringLiteral {return expression;}
+  |
+  expression = parseNumericLiteral
   {
     return expression;
   }

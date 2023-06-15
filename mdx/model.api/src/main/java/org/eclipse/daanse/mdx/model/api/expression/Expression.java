@@ -13,6 +13,7 @@
 */
 package org.eclipse.daanse.mdx.model.api.expression;
 
-public sealed interface Expression permits CallExpression, Literal, CompoundId, ObjectIdentifier {
+//public sealed interface Expression permits CallExpression, Literal, CompoundId, ObjectIdentifier {
+public interface Expression {
 
 }
