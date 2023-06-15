@@ -18,6 +18,7 @@
    </target>
 
    <target name="compile" depends="parser-gen">
+      <mkdir dir="target/classes"/>
       <javac srcdir="src/gen/java" 
              destdir="target/classes" 
              fork="true" 

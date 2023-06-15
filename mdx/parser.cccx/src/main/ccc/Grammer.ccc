@@ -82,7 +82,6 @@ import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
 import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
 import org.eclipse.daanse.mdx.model.record.expression.FormulaExpressionR;
 import org.eclipse.daanse.mdx.model.record.expression.KeyObjectIdentifierR;
-import org.eclipse.daanse.mdx.model.record.expression.NameObjectIdentifierR;
 import org.eclipse.daanse.mdx.model.record.expression.NullLiteralR;
 import org.eclipse.daanse.mdx.model.record.expression.NumericLiteralR;
 import org.eclipse.daanse.mdx.model.record.expression.StringLiteralR;
@@ -864,29 +863,43 @@ ObjectIdentifier parseIdentifier :
   }
 ;
 
+INJECT ASTNameObjectIdentifierNode :
+import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
+import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier.Quoting;
+implements NameObjectIdentifier
+{
+  @Property Quoting quoting = Quoting.UNQUOTED;
+  @Property String name;
+  public Quoting quoting() {return getQuoting();}
+  public String name() {return getName();}
+}
 
-NameObjectIdentifier parseNameObjectIdentifier :
+NameObjectIdentifier parseNameObjectIdentifier#NameObjectIdentifierNode :
 {
   String id;
 }
   id = parseKeyword
   {
     // Keywords that are  not Reserved could be used
-    return new NameObjectIdentifierR(id, ObjectIdentifier.Quoting.UNQUOTED);
+    CURRENT_NODE.setName(id);
+    return CURRENT_NODE;
   }
 | < ID >
   {
-    return new NameObjectIdentifierR(getToken(0).getImage(), ObjectIdentifier.Quoting.UNQUOTED);
+    CURRENT_NODE.setName(getTokenImage(0));
+    return CURRENT_NODE;
   }
 | < ATSIGN > < ID >
   {
-    return new NameObjectIdentifierR("@" + getToken(0).getImage(), ObjectIdentifier.Quoting.UNQUOTED);
+    CURRENT_NODE.setName("@" + getTokenImage(0));
+    return CURRENT_NODE;
   }
 | < QUOTED_ID >
   {
-    return new NameObjectIdentifierR(
-    MdxParserUtil.stripQuotes(getToken(0).getImage(), "[", "]", "]]"),
-    ObjectIdentifier.Quoting.QUOTED);
+    String name = MdxParserUtil.stripQuotes(getTokenImage(0), "[", "]", "]]");
+    CURRENT_NODE.setQuoting(ObjectIdentifier.Quoting.QUOTED);
+    CURRENT_NODE.setName(name);
+    return CURRENT_NODE;
   }
 ;
 
@@ -909,19 +922,19 @@ KeyObjectIdentifier parseKeyIdentifier :
 ;
 
 
-NameObjectIdentifier parseAmpId :
+NameObjectIdentifier parseAmpId#NameObjectIdentifierNode :
   < AMP_QUOTED_ID >
   {
-    return new NameObjectIdentifierR(
-    MdxParserUtil.stripQuotes(getToken(0).getImage(), "&[", "]", "]]"),
-    ObjectIdentifier.Quoting.QUOTED);
+    String name = MdxParserUtil.stripQuotes(getTokenImage(0), "&[", "]", "]]");
+    CURRENT_NODE.setName(name);
+    CURRENT_NODE.setQuoting(ObjectIdentifier.Quoting.QUOTED);
+    return CURRENT_NODE;
   }
-|
+  |
   < AMP_UNQUOTED_ID >
   {
-    return new NameObjectIdentifierR(
-    getToken(0).getImage().substring(1),
-    ObjectIdentifier.Quoting.UNQUOTED);
+    CURRENT_NODE.setName(getTokenImage(0).substring(1));
+    return CURRENT_NODE;
   }
 ;
 
