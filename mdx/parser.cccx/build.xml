@@ -1,0 +1,32 @@
+<project name="mdxparser" default="compile" basedir=".">
+
+   <target name="clean">
+     <delete dir="src/gen/java/org/eclipse/daanse/mdx/parser/cccx"/>
+   </target>
+
+   <target name="init">
+	  <uptodate property="parser.uptodate"
+        srcfile="src/main/ccc/Grammer.ccc"
+		targetfile="src/gen/java/eclipse/daanse/mdx/parser/cccx/MdxParser.java"/>
+   </target>
+
+   <target name="parser-gen" depends="init" unless="parser.uptodate">
+      <java jar="../../../congo/congocc.jar" fork="true" failonerror="true">
+         <assertions><enable/></assertions>
+         <arg line="-d ../../gen/java src/main/ccc/Grammer.ccc"/>
+      </java>
+   </target>
+
+   <target name="compile" depends="parser-gen">
+      <javac srcdir="src/gen/java" 
+             destdir="target/classes" 
+             fork="true" 
+             includeantruntime="no" 
+             failonerror="true"
+             deprecation="off"
+             debug="on"
+             classpath="../model.api/target/classes:../model.record/target/classes"
+      />
+   </target>
+
+</project>
