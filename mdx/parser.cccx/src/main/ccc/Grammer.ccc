@@ -82,7 +82,6 @@ import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
 import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
 import org.eclipse.daanse.mdx.model.record.expression.KeyObjectIdentifierR;
 import org.eclipse.daanse.mdx.model.record.expression.NullLiteralR;
-import org.eclipse.daanse.mdx.model.record.expression.NumericLiteralR;
 import org.eclipse.daanse.mdx.model.record.expression.SymbolLiteralR;
 import org.eclipse.daanse.mdx.model.record.select.AxisR;
 import org.eclipse.daanse.mdx.model.record.select.CreateMemberBodyClauseR;
@@ -1010,20 +1009,24 @@ Expression objectIdentifierOrFuncall(Expression left) :
   }
 ;
 
+INJECT ASTNumericLiteral :
+  import java.math.BigDecimal;
+  implements org.eclipse.daanse.mdx.model.api.expression.NumericLiteral
+{
+   public BigDecimal value() {
+      return new BigDecimal(getImage());
+   }
+}
 
-NumericLiteral parseNumericLiteral :
+NumericLiteral parseNumericLiteral#NumericLiteral :
+ (
   < DECIMAL_NUMERIC_LITERAL >
-  {
-    return new NumericLiteralR(new BigDecimal(getToken(0).getImage()));
-  }
-| < UNSIGNED_INTEGER_LITERAL >
-  {
-    return new NumericLiteralR(new BigDecimal(getToken(0).getImage()));
-  }
-| < APPROX_NUMERIC_LITERAL >
-  {
-    return new NumericLiteralR(new BigDecimal(getToken(0).getImage()));
-  }
+  | 
+  < UNSIGNED_INTEGER_LITERAL >
+  | 
+  < APPROX_NUMERIC_LITERAL >
+ )
+ {return CURRENT_NODE;}
 ;
 
 INJECT ASTStringLiteral :
