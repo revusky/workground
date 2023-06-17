@@ -492,7 +492,7 @@ class RolapConnectionTest extends TestCase {
             String s=connectInfo.toString();
             assertTrue(
                 connectInfo.toString(),
-                s.toString()==null||s.length()==0));
+                s.toString()==null||s.length()==0);
         }
     }
 

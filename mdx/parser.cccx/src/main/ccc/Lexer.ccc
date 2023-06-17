@@ -1,4 +1,4 @@
-// We use INCLUDE to insert the lexical part of the grammar.
+
 
 COPYRIGHT_BLURB="\n*\n* Copyright (c) 2023 Contributors to the Eclipse Foundation.\n*\n* This program and the accompanying materials are made\n* available under the terms of the Eclipse Public License 2.0\n* which is available at https://www.eclipse.org/legal/epl-2.0/\n*\n* SPDX-License-Identifier: EPL-2.0\n*\n* Contributors: see corresponding .ccc file\n";
 
@@ -35,7 +35,7 @@ TOKEN :
 | < MEASURE : "MEASURE" >
 | < NON : "NON" >
 | < NOT : "NOT" >
-| < NULL : "NULL" >
+| < NULL : "NULL" > #NullLiteral
 | < ON : "ON" >
 | < OR : "OR" >
 | < PAGES : "PAGES" >
@@ -156,20 +156,15 @@ TOKEN :
 | < ATSIGN : "@" >
 ;
 
-
+INCLUDE JAVA_IDENTIFIER_DEF
 /*
  * Identifiers
  * - https://javacc.github.io/javacc/documentation/bnf.html#identifiers
  */
-< DEFAULT >
-TOKEN :
-  < ID :
-    < LETTER >
-    (
-      < LETTER >
-    | < DIGIT >
-    )* >
-|
+
+TOKEN #Identifier :
+  < ID : <JAVA_IDENTIFIER_START> (<JAVA_IDENTIFIER_PART>)* > 
+  |
   < QUOTED_ID :
     < LBRACKET >
     (
@@ -178,81 +173,44 @@ TOKEN :
     )*
     < RBRACKET >
   >
-|
+  |
   < AMP_QUOTED_ID : "&" < QUOTED_ID > >
-|
+  |
   < AMP_UNQUOTED_ID :
     "&" [ "a"-"z", "A"-"Z" ]
-    (
-      < LETTER >
-    | < DIGIT >
-    )* >
-|
-  < #LETTER :
-    [
-    "$",
-    "A"-"Z",
-    "_",
-    "a"-"z",
-    "\u00c0"-"\u00d6",
-    "\u00d8"-"\u00f6",
-    "\u00f8"-"\u00ff",
-    "\u0100"-"\u1fff",
-    "\u3040"-"\u318f",
-    "\u3300"-"\u337f",
-    "\u3400"-"\u3d2d",
-    "\u4e00"-"\u9fff",
-    "\uf900"-"\ufaff"
-    ]
-  >
-|
-  < #DIGIT :
-    [
-    "0"-"9",
-    "\u0660"-"\u0669",
-    "\u06f0"-"\u06f9",
-    "\u0966"-"\u096f",
-    "\u09e6"-"\u09ef",
-    "\u0a66"-"\u0a6f",
-    "\u0ae6"-"\u0aef",
-    "\u0b66"-"\u0b6f",
-    "\u0be7"-"\u0bef",
-    "\u0c66"-"\u0c6f",
-    "\u0ce6"-"\u0cef",
-    "\u0d66"-"\u0d6f",
-    "\u0e50"-"\u0e59",
-    "\u0ed0"-"\u0ed9",
-    "\u1040"-"\u1049"
-    ]
+    ( <JAVA_IDENTIFIER_PART> )*
   >
 ;
 
-
-// Literals
-TOKEN :
+TOKEN #NumericLiteral :
   < UNSIGNED_INTEGER_LITERAL : ([ "0"-"9" ])+ >
-|
+  |
   < APPROX_NUMERIC_LITERAL :
     (
       < UNSIGNED_INTEGER_LITERAL >
-    | < DECIMAL_NUMERIC_LITERAL >
+      | 
+      < DECIMAL_NUMERIC_LITERAL >
     )
-    < EXPONENT > >
-|
+    < EXPONENT > 
+  > 
+  |
   < DECIMAL_NUMERIC_LITERAL :
     ([ "0"-"9" ])+ (".")? ([ "0"-"9" ])*
   | "." ([ "0"-"9" ])+
-  >
-|
+  > 
+  |
+  // This does not seem to be used! (JR)
   < FLOATING_POINT_LITERAL :
     ([ "0"-"9" ])+ "." ([ "0"-"9" ])* (< EXPONENT >)? ([ "f", "F", "d", "D" ])?
   | "." ([ "0"-"9" ])+ (< EXPONENT >)? ([ "f", "F", "d", "D" ])?
   | ([ "0"-"9" ])+ < EXPONENT > ([ "f", "F", "d", "D" ])?
   | ([ "0"-"9" ])+ (< EXPONENT >)? [ "f", "F", "d", "D" ]
   >
-|
+  |
   < #EXPONENT : [ "e", "E" ] ([ "+", "-" ])? ([ "0"-"9" ])+ >
-|
+;
+
+TOKEN #StringLiteral : 
   < SINGLE_QUOTED_STRING :
     "'"
     (
@@ -260,16 +218,42 @@ TOKEN :
     | ("''")
     )*
     "'" >
-|
+  |
   < DOUBLE_QUOTED_STRING :
     "\""
     (
       (~[ "\"" ])
     | ("\"\"")
     )*
-    "\"" >
-|
-  < #WHITESPACE :
-    [ " ", "\t", "\n", "\r", "\f" ]
+    "\"" 
   >
 ;
+
+INJECT ASTStringLiteral :
+   import static PARSER_PACKAGE.PARSER_CLASS.stripQuotes;
+   implements org.eclipse.daanse.mdx.model.api.expression.StringLiteral 
+{
+   @Property String value;
+   public String value() {
+      return getValue();
+   }
+
+   public void close() {
+      String image = getImage();
+      if (image.charAt(0) == '\'') 
+         value = stripQuotes(image, "'", "'", "''");
+      else 
+         value = stripQuotes(image, "\"", "\"", "\"\"");
+   }
+}
+
+INJECT ASTNumericLiteral : 
+  import java.math.BigDecimal;
+  implements org.eclipse.daanse.mdx.model.api.expression.NumericLiteral
+{
+   public BigDecimal value() {
+      return new BigDecimal(getImage());
+   }
+}
+
+INJECT ASTNullLiteral : implements org.eclipse.daanse.mdx.model.api.expression.NullLiteral;

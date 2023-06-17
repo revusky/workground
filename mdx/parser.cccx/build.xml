@@ -11,7 +11,7 @@
    </target>
 
    <target name="parser-gen" depends="init" unless="parser.uptodate">
-      <java jar="../../../congo/congocc.jar" fork="true" failonerror="true">
+      <java jar="bin/congocc.jar" fork="true" failonerror="true">
          <assertions><enable/></assertions>
          <arg line="-d ../../gen/java src/main/ccc/Grammer.ccc"/>
       </java>
