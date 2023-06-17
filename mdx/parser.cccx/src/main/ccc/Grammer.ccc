@@ -55,7 +55,6 @@ import org.eclipse.daanse.mdx.model.api.expression.Expression;
 import org.eclipse.daanse.mdx.model.api.expression.FormulaExpression;
 import org.eclipse.daanse.mdx.model.api.expression.KeyObjectIdentifier;
 import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
-import org.eclipse.daanse.mdx.model.api.expression.NumericLiteral;
 import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier;
 import org.eclipse.daanse.mdx.model.api.select.Axis;
 import org.eclipse.daanse.mdx.model.api.select.CreateCellCalculationBodyClause;
@@ -81,7 +80,6 @@ import org.eclipse.daanse.mdx.model.record.SelectStatementR;
 import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
 import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
 import org.eclipse.daanse.mdx.model.record.expression.KeyObjectIdentifierR;
-import org.eclipse.daanse.mdx.model.record.expression.NullLiteralR;
 import org.eclipse.daanse.mdx.model.record.expression.SymbolLiteralR;
 import org.eclipse.daanse.mdx.model.record.select.AxisR;
 import org.eclipse.daanse.mdx.model.record.select.CreateMemberBodyClauseR;
@@ -1061,26 +1059,19 @@ Expression objectIdentifierOrFuncall(Expression left) :
   }
 ;
 
-NumericLiteral parseNumericLiteral#void :
- (
-  < DECIMAL_NUMERIC_LITERAL >
-  | 
-  < UNSIGNED_INTEGER_LITERAL >
-  | 
-  < APPROX_NUMERIC_LITERAL >
- )
- {return (NumericLiteral) lastConsumedToken;}
+Literal#void :
+  <SINGLE_QUOTED_STRING>
+  |
+  <DOUBLE_QUOTED_STRING>
+  |
+  <UNSIGNED_INTEGER_LITERAL>
+  |
+  <DECIMAL_NUMERIC_LITERAL>
+  |
+  <APPROX_NUMERIC_LITERAL>
+  |
+  <NULL>
 ;
-
-Expression parseStringLiteral#void :
-  (
-   <SINGLE_QUOTED_STRING>
-   |
-   <DOUBLE_QUOTED_STRING>
-  )
-  {return (Expression) lastConsumedToken;}
-;   
-
 
 Expression parseAtom :
 {
@@ -1088,14 +1079,14 @@ Expression parseAtom :
   NameObjectIdentifier nameObjectIdentifier;
   List < Expression > expressions;
 }
-  expression=parseStringLiteral {return expression;}
-  |
-  expression = parseNumericLiteral { return expression; }
+  Literal {return (Expression) lastConsumedToken;}
   | 
-  < NULL > {return (Expression) lastConsumedToken;}
-  | 
-  < CAST > < LPAREN > expression = parseUnaliasedExpression
-  < AS > nameObjectIdentifier = parseNameObjectIdentifier < RPAREN >
+  < CAST > 
+  < LPAREN > 
+  expression = parseUnaliasedExpression
+  < AS > 
+  nameObjectIdentifier = parseNameObjectIdentifier 
+  < RPAREN >
   {
     return new CallExpressionR(
     "CAST", CallExpression.Type.CAST, List.of(
@@ -1128,11 +1119,11 @@ Expression parseAtom :
     return new CallExpressionR(
     "{}", CallExpression.Type.BRACES, expressions);
   }
-| expression = parseCaseExpression
+  | expression = parseCaseExpression
   {
     return expression;
   }
-|
+  |
   // Function call "foo(a, b)" or "whiz!bang!foo(a, b)".
   // Properties "x.PROP" and methods "exp.meth(a)" are in primary().
   nameObjectIdentifier = parseNameObjectIdentifier
