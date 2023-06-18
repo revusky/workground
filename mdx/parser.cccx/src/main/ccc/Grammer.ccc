@@ -82,9 +82,6 @@ import org.eclipse.daanse.mdx.model.record.expression.SymbolLiteralR;
 import org.eclipse.daanse.mdx.model.record.select.AxisR;
 import org.eclipse.daanse.mdx.model.record.select.CreateMemberBodyClauseR;
 import org.eclipse.daanse.mdx.model.record.select.CreateSetBodyClauseR;
-import org.eclipse.daanse.mdx.model.record.select.MeasureBodyClauseR;
-import org.eclipse.daanse.mdx.model.record.select.MemberPropertyDefinitionR;
-import org.eclipse.daanse.mdx.model.record.select.SelectCellPropertyListClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectDimensionPropertyListClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryAxesClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryAxisClauseR;
@@ -285,13 +282,13 @@ CreateCellCalculationBodyClause parseCreateCellCalculationBodyClause:
   }
 ;
 
+INJECT ASTMeasureBodyClause : implements org.eclipse.daanse.mdx.model.api.select.MeasureBodyClause;
+
 // https://learn.microsoft.com/en-us/analysis-services/multidimensional-models/mdx/mdx-building-measures?view=asallproducts-allversions
-MeasureBodyClause parseMeasureBodyClause:
-{
-}
+MeasureBodyClause parseMeasureBodyClause#MeasureBodyClause:
   <NOT><NOT><NOT><NOT><NOT><NOT><NOT>
   {
-    return new MeasureBodyClauseR();
+     return CURRENT_NODE;
   }
 ;
 
@@ -457,29 +454,35 @@ Optional<SelectSlicerAxisClause> parseSelectSlicerAxisClause :
 ;
 
 
-SelectCellPropertyListClause parseSelectCellPropertyListClause :
+INJECT ASTSelectCellPropertyListClause :
+   import java.util.List;
+   import java.util.ArrayList;
+   implements org.eclipse.daanse.mdx.model.api.select.SelectCellPropertyListClause
 {
-  List < String > cellProperties = new LinkedList<>();
-  String property=null;
-  boolean cell=false;
+   public boolean cell() {
+      return getChild(0).getType() == CELL;
+   }
+
+   public List<String> properties() {
+      List<String> result = new ArrayList<>();
+      for (Node n : children()) {
+        if (n.getType() == ID) {
+          result.add(n.getImage());
+        }
+      }
+      return result;
+   }
 }
-  (< CELL >
-     {
-      cell=true;
-     }
-  )?
-   < PROPERTIES > <ID>
-    {
-      cellProperties.add(getToken(0).getImage());
-    }
+
+SelectCellPropertyListClause parseSelectCellPropertyListClause#SelectCellPropertyListClause :
+  (< CELL >)?
+  < PROPERTIES > 
+  <ID>
   (
     < COMMA > <ID>
-    {
-      cellProperties.add(getToken(0).getImage());
-    }
   )*
   {
-    return new SelectCellPropertyListClauseR(cellProperties,cell);
+    return CURRENT_NODE;
   }
 ;
 
@@ -493,29 +496,46 @@ CreateMemberBodyClause parseCreateMemberBodyClause :
 }
 //  <CURRENTCUBE>
 //  |
-  compoundId = parseCompoundId < AS > expression = parseExpression
-
+  compoundId = parseCompoundId 
+  < AS > 
+  expression = parseExpression
   (
     < COMMA > memberPropertyDefinition = parseMemberPropertyDefinition
     {
       memberPropertyDefinitions.add(memberPropertyDefinition);
     }
   )*
-
   {
     return new CreateMemberBodyClauseR(compoundId,expression,memberPropertyDefinitions);
   }
 ;
 
-
-MemberPropertyDefinition parseMemberPropertyDefinition :
+INJECT ASTCreateMemberBodyClause :
+  implements org.eclipse.daanse.mdx.model.api.select.CreateMemberBodyClause;
 {
-  ObjectIdentifier objectIdentifier;
-  Expression expression;
+
+}  
+
+INJECT ASTMemberPropertyDefinition :
+  import org.eclipse.daanse.mdx.model.api.expression.Expression;
+  import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier;
+  implements org.eclipse.daanse.mdx.model.api.select.MemberPropertyDefinition
+{
+   public ObjectIdentifier objectIdentifier() {
+      return (ObjectIdentifier) getChild(0);
+   }
+
+   public Expression expression() {
+      return (Expression) getChild(2);
+   }
 }
-  objectIdentifier = parseIdentifier < EQ > expression = parseExpression
+
+MemberPropertyDefinition parseMemberPropertyDefinition#MemberPropertyDefinition :
+  parseIdentifier 
+  < EQ > 
+  parseExpression
   {
-    return new MemberPropertyDefinitionR(objectIdentifier,expression);
+     return CURRENT_NODE;
   }
 ;
 
@@ -625,7 +645,7 @@ Expression parseExpressionEof :
 ;
 
 
-ObjectIdentifier parseIdentifier :
+ObjectIdentifier parseIdentifier#void :
 {
   ObjectIdentifier objectIdentifier;
 }
