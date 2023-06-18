@@ -80,7 +80,6 @@ import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
 import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
 import org.eclipse.daanse.mdx.model.record.expression.SymbolLiteralR;
 import org.eclipse.daanse.mdx.model.record.select.AxisR;
-import org.eclipse.daanse.mdx.model.record.select.CreateMemberBodyClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectDimensionPropertyListClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryAxesClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryAxisClauseR;
@@ -485,8 +484,33 @@ SelectCellPropertyListClause parseSelectCellPropertyListClause#SelectCellPropert
   }
 ;
 
+INJECT ASTCreateMemberBodyClause :
+  import java.util.List;
+  import java.util.ArrayList;
+  import org.eclipse.daanse.mdx.model.api.expression.Expression;
+  import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
+  import org.eclipse.daanse.mdx.model.api.select.MemberPropertyDefinition;
+  implements org.eclipse.daanse.mdx.model.api.select.CreateMemberBodyClause
+{
+  public CompoundId compoundId() {
+    return (CompoundId) getChild(0);
+  }
+
+  public Expression expression() {
+     return (Expression) getChild(2);
+  }
+
+  public List<MemberPropertyDefinition> memberPropertyDefinitions() {
+     List<MemberPropertyDefinition> result = new ArrayList<>();
+     for (Node n : children()) {
+       if (n instanceof MemberPropertyDefinition) result.add((MemberPropertyDefinition)n);
+     }
+     return result;
+  }
+}  
+
 // https://learn.microsoft.com/en-us/sql/mdx/mdx-data-definition-create-member?view=sql-server-ver16
-CreateMemberBodyClause parseCreateMemberBodyClause :
+CreateMemberBodyClause parseCreateMemberBodyClause#CreateMemberBodyClause :
 {
  CompoundId compoundId = null;
  Expression expression = null;
@@ -505,7 +529,7 @@ CreateMemberBodyClause parseCreateMemberBodyClause :
     }
   )*
   {
-    return new CreateMemberBodyClauseR(compoundId,expression,memberPropertyDefinitions);
+    return CURRENT_NODE;
   }
 ;
 
