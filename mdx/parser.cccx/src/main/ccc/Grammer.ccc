@@ -81,7 +81,6 @@ import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
 import org.eclipse.daanse.mdx.model.record.expression.SymbolLiteralR;
 import org.eclipse.daanse.mdx.model.record.select.AxisR;
 import org.eclipse.daanse.mdx.model.record.select.CreateMemberBodyClauseR;
-import org.eclipse.daanse.mdx.model.record.select.CreateSetBodyClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectDimensionPropertyListClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryAxesClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryAxisClauseR;
@@ -556,11 +555,12 @@ Expression parseExpression :
 }
   expression = parseUnaliasedExpression
   (
-    < AS > objectIdentifier = parseIdentifier
+    < AS > 
+    objectIdentifier = parseIdentifier
     {
-      CompoundId compundId = new CompoundIdR(List.of(objectIdentifier));
+      CompoundId compoundId = new CompoundIdR(List.of(objectIdentifier));
       expression = new CallExpressionR("AS", CallExpression.Type.TERM_INFIX, List.of(
-      expression, compundId
+      expression, compoundId
       )
       );
     }
@@ -750,8 +750,24 @@ String parseKeyword :
   }
 ;
 
+INJECT ASTCompoundId :
+  import java.util.List;
+  import java.util.ArrayList;
+  import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier;
+  implements org.eclipse.daanse.mdx.model.api.expression.CompoundId
+{
+    public List<ObjectIdentifier> objectIdentifiers() {
+       List<ObjectIdentifier> result = new ArrayList<>();
+       for (Node n : children()) {
+          if (n instanceof ObjectIdentifier) {
+            result.add((ObjectIdentifier)n);
+          }
+       }
+       return result;
+    }
+}  
 
-CompoundId parseCompoundId :
+CompoundId parseCompoundId#CompoundId :
 {
   CompoundId compoundId;
   List < ObjectIdentifier > list = new ArrayList <> ();
@@ -769,7 +785,7 @@ CompoundId parseCompoundId :
     }
   )*
   {
-    return new CompoundIdR(list);
+    return CURRENT_NODE;
   }
 ;
 
@@ -1232,9 +1248,21 @@ Expression parseCaseExpression :
   }
 ;
 
+INJECT ASTCreateSetBodyClause :
+  import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
+  import org.eclipse.daanse.mdx.model.api.expression.Expression;
+  implements org.eclipse.daanse.mdx.model.api.select.CreateSetBodyClause
+{
+   public CompoundId compoundId() {
+      return (CompoundId) getChild(0);
+   }
 
+   public Expression expression() {
+      return (Expression) getChild(2);
+   }
+}  
 
-CreateSetBodyClause parseCreateSetBodyClause :
+CreateSetBodyClause parseCreateSetBodyClause#CreateSetBodyClause :
 {
  CompoundId compoundId = null;
  Expression expression = null;
@@ -1244,7 +1272,7 @@ CreateSetBodyClause parseCreateSetBodyClause :
 
   compoundId = parseCompoundId < AS > expression = parseExpression
   {
-    return new CreateSetBodyClauseR(compoundId,expression);
+    return CURRENT_NODE;
   }
 ;
 
