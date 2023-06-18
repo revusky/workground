@@ -85,7 +85,6 @@ import org.eclipse.daanse.mdx.model.record.select.SelectQueryAxesClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryAxisClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryEmptyClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectSlicerAxisClauseR;
-import org.eclipse.daanse.mdx.model.record.select.SelectSubcubeClauseNameR;
 import org.eclipse.daanse.mdx.model.record.select.SelectSubcubeClauseStatementR;
 import org.eclipse.daanse.mdx.model.record.DMVStatementR;
 {
@@ -368,13 +367,19 @@ SelectSubcubeClause parseSelectSubcubeClause :
 ;
 
 
-SelectSubcubeClauseName parseSelectSubcubeClauseName :
+INJECT ASTSelectSubcubeClauseName :
+   import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
+   implements org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseName
 {
-  NameObjectIdentifier nameObjectIdentifier;
-}
-  nameObjectIdentifier = parseNameObjectIdentifier
+   public NameObjectIdentifier cubeName() {
+      return (NameObjectIdentifier) getChild(0);
+   }
+}   
+
+SelectSubcubeClauseName parseSelectSubcubeClauseName#SelectSubcubeClauseName :
+  parseNameObjectIdentifier
   {
-    return new SelectSubcubeClauseNameR(nameObjectIdentifier);
+    return CURRENT_NODE;
   }
 ;
 
