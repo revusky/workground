@@ -75,7 +75,6 @@ import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseStatement;
 import org.eclipse.daanse.mdx.model.api.select.SelectWithClause;
 import org.eclipse.daanse.mdx.model.record.DrillthroughStatementR;
 import org.eclipse.daanse.mdx.model.record.ExplainStatementR;
-import org.eclipse.daanse.mdx.model.record.ReturnItemR;
 import org.eclipse.daanse.mdx.model.record.SelectStatementR;
 import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
 import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
@@ -95,7 +94,6 @@ import org.eclipse.daanse.mdx.model.record.select.SelectQueryEmptyClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectSlicerAxisClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectSubcubeClauseNameR;
 import org.eclipse.daanse.mdx.model.record.select.SelectSubcubeClauseStatementR;
-import org.eclipse.daanse.mdx.model.record.RefreshStatementR;
 import org.eclipse.daanse.mdx.model.record.DMVStatementR;
 {
 	public static String stripQuotes(String s, String prefix, String suffix, String quoted) {
@@ -150,7 +148,6 @@ import org.eclipse.daanse.mdx.model.record.DMVStatementR;
 			}
 		}
 	}
-
 }
 
 INCLUDE "Lexer.ccc"
@@ -262,14 +259,19 @@ List < ReturnItem > parseReturnItems :
   }
 ;
 
-
-ReturnItem parseReturnItem :
+INJECT ASTReturnItem :
+  import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
+  implements org.eclipse.daanse.mdx.model.api.ReturnItem
 {
-  CompoundId compoundId;
+   public CompoundId compoundId() {
+     return (CompoundId) getChild(0);
+   }
 }
-  compoundId = parseCompoundId
+
+ReturnItem parseReturnItem#ReturnItem :
+  parseCompoundId
   {
-    return new ReturnItemR(compoundId);
+    return CURRENT_NODE;
   }
 ;
 
@@ -639,9 +641,9 @@ ObjectIdentifier parseIdentifier :
 ;
 
 INJECT ASTNameObjectIdentifier :
-import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
-import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier.Quoting;
-implements NameObjectIdentifier
+  import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
+  import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier.Quoting;
+  implements NameObjectIdentifier
 {
   @Property Quoting quoting = Quoting.UNQUOTED;
   @Property String name;
@@ -1237,15 +1239,22 @@ SelectDimensionPropertyListClause parseSelectDimensionPropertyListClause :
   }
 ;
 
+INJECT ASTRefreshStatement :
+   import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
+   implements org.eclipse.daanse.mdx.model.api.RefreshStatement;
+{
+   public NameObjectIdentifier cubeName() {
+      return (NameObjectIdentifier) getChild(2);
+   }
+}
 
-RefreshStatement parseRefreshStatement :
-{
-  NameObjectIdentifier cubeName;
-}
-  < REFRESH > < CUBE >  cubeName = parseNameObjectIdentifier
-{
-    return new RefreshStatementR(cubeName);
-}
+RefreshStatement parseRefreshStatement#RefreshStatement :
+  < REFRESH > 
+  < CUBE >  
+  parseNameObjectIdentifier
+  {
+     return CURRENT_NODE;
+  }
 ;
 
 DMVStatement parseDMVStatement :
