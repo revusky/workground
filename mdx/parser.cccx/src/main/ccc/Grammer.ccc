@@ -78,7 +78,6 @@ import org.eclipse.daanse.mdx.model.record.ExplainStatementR;
 import org.eclipse.daanse.mdx.model.record.SelectStatementR;
 import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
 import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
-import org.eclipse.daanse.mdx.model.record.expression.KeyObjectIdentifierR;
 import org.eclipse.daanse.mdx.model.record.expression.SymbolLiteralR;
 import org.eclipse.daanse.mdx.model.record.select.AxisR;
 import org.eclipse.daanse.mdx.model.record.select.CreateMemberBodyClauseR;
@@ -87,7 +86,6 @@ import org.eclipse.daanse.mdx.model.record.select.MeasureBodyClauseR;
 import org.eclipse.daanse.mdx.model.record.select.MemberPropertyDefinitionR;
 import org.eclipse.daanse.mdx.model.record.select.SelectCellPropertyListClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectDimensionPropertyListClauseR;
-import org.eclipse.daanse.mdx.model.record.select.SelectQueryAsteriskClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryAxesClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryAxisClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryEmptyClauseR;
@@ -413,11 +411,12 @@ SelectSubcubeClauseStatement parseSelectSubcubeClauseStatement :
   }
 ;
 
+INJECT ASTSelectQueryAsteriskClause : implements org.eclipse.daanse.mdx.model.api.select.SelectQueryAsteriskClause;
 
-SelectQueryAsteriskClause parseSelectQueryAsteriskClause :
+SelectQueryAsteriskClause parseSelectQueryAsteriskClause#SelectQueryAsteriskClause :
   < ASTERISK >
   {
-    return new SelectQueryAsteriskClauseR();
+    return CURRENT_NODE;
   }
 ;
 
@@ -673,20 +672,31 @@ NameObjectIdentifier parseNameObjectIdentifier#NameObjectIdentifier :
 ;
 
 
-// for example '&foo&[1]&bar' in '[x].&foo&[1]&bar.[y]'
-KeyObjectIdentifier parseKeyIdentifier :
+INJECT ASTKeyObjectIdentifier :
+   import java.util.List;
+   import java.util.ArrayList;
+   import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
+   implements org.eclipse.daanse.mdx.model.api.expression.KeyObjectIdentifier
 {
-  List < NameObjectIdentifier > list = new ArrayList <> ();
-  NameObjectIdentifier key;
+   public List<NameObjectIdentifier> nameObjectIdentifiers() {
+     List<NameObjectIdentifier> result = new ArrayList<>();
+     for (Node n : children()) {
+        result.add((NameObjectIdentifier) n);
+     }
+     return result;
+   }
+
+   @Override
+   public Quoting quoting() {
+       return Quoting.KEY;
+   }
 }
-  (
-    key = parseAmpId
-    {
-      list.add(key);
-    }
-  )+
+
+// for example '&foo&[1]&bar' in '[x].&foo&[1]&bar.[y]'
+KeyObjectIdentifier parseKeyIdentifier#KeyObjectIdentifier :
+  ( parseAmpId )+
   {
-    return new KeyObjectIdentifierR(list);
+    return CURRENT_NODE;
   }
 ;
 
