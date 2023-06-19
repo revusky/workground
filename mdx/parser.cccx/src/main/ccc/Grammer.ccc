@@ -42,10 +42,8 @@ import java.util.ListIterator;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 
-import org.eclipse.daanse.mdx.model.api.DrillthroughStatement;
 import org.eclipse.daanse.mdx.model.api.ExplainStatement;
 import org.eclipse.daanse.mdx.model.api.MdxStatement;
-import org.eclipse.daanse.mdx.model.api.ReturnItem;
 import org.eclipse.daanse.mdx.model.api.SelectStatement;
 import org.eclipse.daanse.mdx.model.api.RefreshStatement;
 import org.eclipse.daanse.mdx.model.api.DMVStatement;
@@ -72,13 +70,10 @@ import org.eclipse.daanse.mdx.model.api.select.SelectSlicerAxisClause;
 import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClause;
 import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseName;
 import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseStatement;
-import org.eclipse.daanse.mdx.model.api.select.SelectWithClause;
 import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
 import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
 import org.eclipse.daanse.mdx.model.record.expression.SymbolLiteralR;
-import org.eclipse.daanse.mdx.model.record.select.AxisR;
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryAxesClauseR;
-import org.eclipse.daanse.mdx.model.record.select.SelectQueryEmptyClauseR;
 {
 	public static String stripQuotes(String s, String prefix, String suffix, String quoted) {
 		if (!(s.startsWith(prefix) && s.endsWith(suffix))) {
@@ -294,7 +289,6 @@ INJECT ASTSelectStatement :
    import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClause;
    import org.eclipse.daanse.mdx.model.api.select.SelectSlicerAxisClause;
    import org.eclipse.daanse.mdx.model.api.select.SelectCellPropertyListClause;
-   import org.eclipse.daanse.mdx.model.record.select.SelectQueryEmptyClauseR;
    implements org.eclipse.daanse.mdx.model.api.SelectStatement;
 {
     public List<SelectWithClause> selectWithClauses() {
@@ -302,9 +296,7 @@ INJECT ASTSelectStatement :
     } 
 
     public SelectQueryClause selectQueryClause() {
-        SelectQueryClause result = firstChildOfType(SelectQueryClause.class);
-        return result == null ? new SelectQueryEmptyClauseR()
-                              : result;
+        return firstChildOfType(SelectQueryClause.class);
     }
 
     public SelectSubcubeClause selectSubcubeClause() {
@@ -1385,10 +1377,6 @@ INJECT ASTSelectQueryAxisClause :
 
 // <SelectQueryAxisClause> ::= [NON EMPTY] <set> [<dimProps>] ON <axis_name>
 SelectQueryAxisClause parseSelectQueryAxisClause#SelectQueryAxisClause :
-{
-  int n;
-  Axis axis;
-}
   (< NON > < EMPTY >) ?
   parseExpression
   (
@@ -1398,47 +1386,23 @@ SelectQueryAxisClause parseSelectQueryAxisClause#SelectQueryAxisClause :
   (
     (
       < UNSIGNED_INTEGER_LITERAL >
-      {
-        n = Integer.valueOf(getToken(0).getImage()).intValue();
-      }
-      | < AXIS > < LPAREN > < UNSIGNED_INTEGER_LITERAL >
-      {
-        n = Integer.valueOf(getToken(0).getImage()).intValue();
-      }
+      | 
+      < AXIS >
+      < LPAREN > 
+      < UNSIGNED_INTEGER_LITERAL >
       < RPAREN >
     )
-    {
-      if (n < 0)
-      {
-        fail("Only axis numbers >= 0 allowed.");
-      }
-      else
-      {
-        axis = AxisR.createUnnamed(n);
-      }
-    }
-  |
+    |
     (
       < COLUMNS >
-      {
-        axis = AxisR.COLUMNS_NAMED;
-      }
-    | < ROWS >
-      {
-        axis = AxisR.ROWS_NAMED;
-      }
-    | < PAGES >
-      {
-        axis = AxisR.PAGES_NAMED;
-      }
-    | < SECTIONS >
-      {
-        axis = AxisR.SECTIONS_NAMED;
-      }
-    | < CHAPTERS >
-      {
-        axis = AxisR.CHAPTERS_NAMED;
-      }
+      | 
+      < ROWS >
+      | 
+      < PAGES >
+      | 
+      < SECTIONS >
+      | 
+      < CHAPTERS >
     )
   )
   {
