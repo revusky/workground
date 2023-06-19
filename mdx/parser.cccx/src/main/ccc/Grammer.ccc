@@ -201,7 +201,7 @@ DrillthroughStatement parseDrillthroughStatement :
   (
     < FIRSTROWSET > < UNSIGNED_INTEGER_LITERAL >
     {
-        firstRowSet = Optional.of(Integer.valueOf(getToken(0).getImage()));
+        firstRowSet = Optional.of(Integer.valueOf(getTokenImage(0)));
     }
   )?
   selectStatement = parseSelectStatement
@@ -408,23 +408,19 @@ INJECT ASTSelectSubcubeClauseStatement :
 
 
 SelectSubcubeClauseStatement parseSelectSubcubeClauseStatement#SelectSubcubeClauseStatement :
-{
-  Optional<SelectSlicerAxisClause> selectSlicerAxisClause = Optional.empty();
-}
+  < LPAREN > 
+  < SELECT >
   (
-    < LPAREN > < SELECT >
-    (
-      parseSelectQueryAsteriskClause
-      |
-      parseSelectQueryAxesClause
-    )?
-    < FROM > 
-    parseSelectSubcubeClause
-    (
-      selectSlicerAxisClause = parseSelectSlicerAxisClause
-    )?
-    < RPAREN >
-  )
+    parseSelectQueryAsteriskClause
+    |
+    parseSelectQueryAxesClause
+  )?
+  < FROM > 
+  parseSelectSubcubeClause
+  (
+    parseSelectSlicerAxisClause
+  )?
+  < RPAREN >
   {
     return CURRENT_NODE;
   }
@@ -474,7 +470,8 @@ Optional<SelectSlicerAxisClause> parseSelectSlicerAxisClause#SelectSlicerAxisCla
 {
   Expression expression = null;
 }
-  < WHERE > expression = parseExpression
+  < WHERE > 
+  expression = parseExpression
   {
     if(expression==null)
     {
@@ -541,30 +538,6 @@ INJECT ASTCreateMemberBodyClause :
      return result;
   }
 }  
-#if false
-CreateMemberBodyClause parseCreateMemberBodyClause#CreateMemberBodyClause :
-{
- CompoundId compoundId = null;
- Expression expression = null;
- List<MemberPropertyDefinition> memberPropertyDefinitions = new LinkedList<>();
- MemberPropertyDefinition memberPropertyDefinition = null;
-}
-//  <CURRENTCUBE>
-//  |
-  compoundId = parseCompoundId 
-  < AS > 
-  expression = parseExpression
-  (
-    < COMMA > memberPropertyDefinition = parseMemberPropertyDefinition
-    {
-      memberPropertyDefinitions.add(memberPropertyDefinition);
-    }
-  )*
-  {
-    return CURRENT_NODE;
-  }
-;
-#endif
 
 // https://learn.microsoft.com/en-us/sql/mdx/mdx-data-definition-create-member?view=sql-server-ver16
 CreateMemberBodyClause parseCreateMemberBodyClause#CreateMemberBodyClause :
@@ -730,9 +703,7 @@ ObjectIdentifier parseIdentifier#void :
 ;
 
 INJECT ASTNameObjectIdentifier :
-  import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
-  import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier.Quoting;
-  implements NameObjectIdentifier
+  implements org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
 {
   @Property Quoting quoting = Quoting.UNQUOTED;
   @Property String name;
@@ -741,11 +712,8 @@ INJECT ASTNameObjectIdentifier :
 }
 
 NameObjectIdentifier parseNameObjectIdentifier#NameObjectIdentifier :
-{
-  String id;
-}
  (
-  id = parseKeyword {CURRENT_NODE.setName(id);}
+  parseKeyword {CURRENT_NODE.setName(getTokenImage(0));}
   |
   < ID > {CURRENT_NODE.setName(getTokenImage(0));}
   |
@@ -816,7 +784,7 @@ String parseKeyword :
   | < PROPERTIES >
   )
   {
-    return getToken(0).getImage();
+    return getTokenImage(0);
   }
 ;
 
@@ -1177,7 +1145,7 @@ Expression objectIdentifierOrFuncall(Expression left) :
   }
 ;
 
-Literal#void :
+parseLiteral#void :
   <SINGLE_QUOTED_STRING>
   |
   <DOUBLE_QUOTED_STRING>
@@ -1191,29 +1159,31 @@ Literal#void :
   <NULL>
 ;
 
-Expression parseAtom :
+Expression parseCastExpression#void :
 {
   Expression expression;
   NameObjectIdentifier nameObjectIdentifier;
-  List < Expression > expressions;
 }
-  Literal {return (Expression) lastConsumedToken;}
-  | 
-  < CAST > 
-  < LPAREN > 
+  <CAST>
+  <LPAREN>
   expression = parseUnaliasedExpression
-  < AS > 
+  <AS>
   nameObjectIdentifier = parseNameObjectIdentifier 
-  < RPAREN >
+  <RPAREN>
   {
     return new CallExpressionR(
-    "CAST", CallExpression.Type.CAST, List.of(
-    expression,
-    new SymbolLiteralR(nameObjectIdentifier.name())
-    )
+      "CAST", CallExpression.Type.CAST, List.of(
+      expression,
+      new SymbolLiteralR(nameObjectIdentifier.name())
+     )
     );
   }
-  | 
+;
+
+Expression parseExpressionList#void :
+{
+   List<Expression> expressions;
+}
   < LPAREN > expressions = expList < RPAREN >
   {
     // Whereas ([Sales],[Time]) and () are tuples, ([Sales]) and (5)
@@ -1221,7 +1191,12 @@ Expression parseAtom :
     return new CallExpressionR(
     "()", CallExpression.Type.PARENTHESES, expressions);
   }
-  |
+;
+
+Expression parseTuple#void :
+{
+   List<Expression> expressions;
+}
   // set built from sets/tuples
   < LBRACE >
   (
@@ -1237,13 +1212,23 @@ Expression parseAtom :
     return new CallExpressionR(
     "{}", CallExpression.Type.BRACES, expressions);
   }
-  | expression = parseCaseExpression
-  {
-    return expression;
-  }
-  |
+;
+
+Expression parseOnlyName#void :
+   parseNameObjectIdentifier ASSERT ~(<BANG>|<LPAREN>) =>||
+   {
+      return (Expression) peekNode();
+   }
+;
+
+Expression parseMaybeBangMaybeFunctionCall#void :
   // Function call "foo(a, b)" or "whiz!bang!foo(a, b)".
   // Properties "x.PROP" and methods "exp.meth(a)" are in primary().
+{
+  Expression expression;
+  NameObjectIdentifier nameObjectIdentifier;
+  List < Expression > expressions = null;
+}
   nameObjectIdentifier = parseNameObjectIdentifier
   (
     < BANG > nameObjectIdentifier = parseNameObjectIdentifier
@@ -1261,22 +1246,42 @@ Expression parseAtom :
       {
         expressions = Collections.emptyList();
       }
-    |
+      |
       expressions = expOrEmptyList
     )
     < RPAREN >
-  |
-    /* empty */{
-      expressions = null;
-    }
-  )
+  )?
   {
     return createCall(null, nameObjectIdentifier, expressions);
   }
 ;
 
+Expression parseAtom :
+{
+  Expression expression;
+}
+  (
+    parseLiteral {expression = (Expression) lastConsumedToken;}
+    | 
+    expression=parseCastExpression
+    |
+    expression=parseExpressionList
+    | 
+    expression=parseTuple 
+    | 
+    expression = parseCaseExpression 
+    |
+    expression = parseOnlyName 
+    |
+    expression = parseMaybeBangMaybeFunctionCall
+  )
+  {
+    return expression;
+  }
+;
 
-Expression parseCaseExpression :
+
+Expression parseCaseExpression#void :
 {
   Expression expression, expression2;
   List < Expression > expressions = new ArrayList <> ();
