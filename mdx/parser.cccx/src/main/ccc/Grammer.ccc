@@ -84,8 +84,6 @@ import org.eclipse.daanse.mdx.model.record.select.SelectDimensionPropertyListCla
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryAxesClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryAxisClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryEmptyClauseR;
-import org.eclipse.daanse.mdx.model.record.select.SelectSlicerAxisClauseR;
-import org.eclipse.daanse.mdx.model.record.select.SelectSubcubeClauseStatementR;
 import org.eclipse.daanse.mdx.model.record.DMVStatementR;
 {
 	public static String stripQuotes(String s, String prefix, String suffix, String quoted) {
@@ -352,17 +350,14 @@ SelectStatement parseSelectStatement :
 ;
 
 
-SelectSubcubeClause parseSelectSubcubeClause :
-{
-  SelectSubcubeClause selectSubcubeClause = null;
-}
+SelectSubcubeClause parseSelectSubcubeClause#void :
   (
-    selectSubcubeClause = parseSelectSubcubeClauseName
-  |
-    selectSubcubeClause = parseSelectSubcubeClauseStatement
+    parseSelectSubcubeClauseName
+    |
+    parseSelectSubcubeClauseStatement
   )
   {
-    return selectSubcubeClause;
+    return (SelectSubcubeClause) peekNode();
   }
 ;
 
@@ -384,30 +379,54 @@ SelectSubcubeClauseName parseSelectSubcubeClauseName#SelectSubcubeClauseName :
 ;
 
 
-SelectSubcubeClauseStatement parseSelectSubcubeClauseStatement :
+INJECT ASTSelectSubcubeClauseStatement :
+  import java.util.Optional;
+  import org.eclipse.daanse.mdx.model.api.select.SelectQueryClause;
+  import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClause;
+  import org.eclipse.daanse.mdx.model.api.select.SelectSlicerAxisClause;
+  implements org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseStatement
 {
-  SelectQueryClause selectQueryClause = null;
-  SelectSubcubeClause selectSubcubeClause = null;
+    public SelectQueryClause selectQueryClause() {
+        for (Node n: children()) {
+            if (n instanceof SelectQueryClause) return (SelectQueryClause) n;
+        }
+        return null;
+    }
+
+    public SelectSubcubeClause selectSubcubeClause() {
+        for (Node n: children()) {
+            if (n instanceof SelectSubcubeClause) return (SelectSubcubeClause) n;
+        }
+        return null;
+    }
+
+    public Optional<SelectSlicerAxisClause> selectSlicerAxisClause() {
+      //TODO
+        return Optional.empty();
+    }
+}  
+
+
+SelectSubcubeClauseStatement parseSelectSubcubeClauseStatement#SelectSubcubeClauseStatement :
+{
   Optional<SelectSlicerAxisClause> selectSlicerAxisClause = Optional.empty();
 }
   (
     < LPAREN > < SELECT >
     (
-      selectQueryClause = parseSelectQueryAsteriskClause
-    |
-      selectQueryClause = parseSelectQueryAxesClause
-    | {
-          selectQueryClause = new SelectQueryEmptyClauseR();
-       }
+      parseSelectQueryAsteriskClause
+      |
+      parseSelectQueryAxesClause
     )?
-    < FROM > selectSubcubeClause = parseSelectSubcubeClause
+    < FROM > 
+    parseSelectSubcubeClause
     (
       selectSlicerAxisClause = parseSelectSlicerAxisClause
     )?
     < RPAREN >
   )
   {
-    return new SelectSubcubeClauseStatementR(selectQueryClause, selectSubcubeClause, selectSlicerAxisClause);
+    return CURRENT_NODE;
   }
 ;
 
@@ -442,7 +461,16 @@ SelectQueryAxesClause parseSelectQueryAxesClause :
 ;
 
 
-Optional<SelectSlicerAxisClause> parseSelectSlicerAxisClause :
+INJECT ASTSelectSlicerAxisClause :
+   import org.eclipse.daanse.mdx.model.api.expression.Expression;
+   implements org.eclipse.daanse.mdx.model.api.select.SelectSlicerAxisClause;
+{
+    public Expression expression() {
+      return (Expression) getChild(1);
+    }
+}
+
+Optional<SelectSlicerAxisClause> parseSelectSlicerAxisClause#SelectSlicerAxisClause :
 {
   Expression expression = null;
 }
@@ -452,7 +480,7 @@ Optional<SelectSlicerAxisClause> parseSelectSlicerAxisClause :
     {
       return Optional.empty();
     }
-    return Optional.of(new SelectSlicerAxisClauseR(expression));
+    return Optional.of(CURRENT_NODE);
   }
 ;
 
@@ -513,8 +541,7 @@ INJECT ASTCreateMemberBodyClause :
      return result;
   }
 }  
-
-// https://learn.microsoft.com/en-us/sql/mdx/mdx-data-definition-create-member?view=sql-server-ver16
+#if false
 CreateMemberBodyClause parseCreateMemberBodyClause#CreateMemberBodyClause :
 {
  CompoundId compoundId = null;
@@ -533,6 +560,20 @@ CreateMemberBodyClause parseCreateMemberBodyClause#CreateMemberBodyClause :
       memberPropertyDefinitions.add(memberPropertyDefinition);
     }
   )*
+  {
+    return CURRENT_NODE;
+  }
+;
+#endif
+
+// https://learn.microsoft.com/en-us/sql/mdx/mdx-data-definition-create-member?view=sql-server-ver16
+CreateMemberBodyClause parseCreateMemberBodyClause#CreateMemberBodyClause :
+  parseCompoundId 
+  < AS > 
+  parseExpression
+    (
+     < COMMA > parseMemberPropertyDefinition
+    )*
   {
     return CURRENT_NODE;
   }
@@ -1379,11 +1420,7 @@ SelectQueryAxisClause parseSelectQueryAxisClause :
   int n;
   Axis axis;
 }
-  (< NON > < EMPTY >
-  {
-    nonEmpty = true;
-  }
-  )?
+  (< NON > < EMPTY > { nonEmpty = true; })?
   expression = parseExpression
   (
     selectDimensionPropertyListClause = parseSelectDimensionPropertyListClause
