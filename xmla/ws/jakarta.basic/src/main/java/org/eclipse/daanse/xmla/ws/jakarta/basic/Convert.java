@@ -1729,7 +1729,7 @@ public class Convert {
         String memberName = map.get(MdSchemaMembersRestrictions.RESTRICTIONS_MEMBER_NAME);
         String memberUniqueName = map.get(MdSchemaMembersRestrictions.RESTRICTIONS_MEMBER_UNIQUE_NAME);
         String memberType = map.get(MdSchemaMembersRestrictions.RESTRICTIONS_MEMBER_TYPE);
-        String measureCaption = map.get(MdSchemaMembersRestrictions.RESTRICTIONS_MEMBER_CAPTION);
+        String memberCaption = map.get(MdSchemaMembersRestrictions.RESTRICTIONS_MEMBER_CAPTION);
         String cubeSource = map.get(MdSchemaMembersRestrictions.RESTRICTIONS_CUBE_SOURCE);
         String treeOp = map.get(MdSchemaMembersRestrictions.RESTRICTIONS_TREE_OP);
 
@@ -1745,7 +1745,7 @@ public class Convert {
                 Optional.ofNullable(memberName),
                 Optional.ofNullable(memberUniqueName),
                 Optional.ofNullable(MemberTypeEnum.fromValue(memberType)),
-                Optional.ofNullable(measureCaption),
+                Optional.ofNullable(memberCaption),
                 Optional.ofNullable(CubeSourceEnum.fromValue(cubeSource)),
                 Optional.ofNullable(TreeOpEnum.fromValue(treeOp)));
     }

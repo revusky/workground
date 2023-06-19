@@ -95,7 +95,7 @@ public interface MdSchemaMembersRestrictions {
     /**
      * @return The caption of the member.
      */
-    Optional<String> measureCaption();
+    Optional<String> memberCaption();
 
     /**
      * @return bitmask with one of these valid values:

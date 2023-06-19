@@ -31,7 +31,7 @@ public record MdSchemaMembersRestrictionsR(
     Optional<String> memberName,
     Optional<String> memberUniqueName,
     Optional<MemberTypeEnum> memberType,
-    Optional<String> measureCaption,
+    Optional<String> memberCaption,
     Optional<CubeSourceEnum> cubeSource,
     Optional<TreeOpEnum> treeOp) implements MdSchemaMembersRestrictions {
 }

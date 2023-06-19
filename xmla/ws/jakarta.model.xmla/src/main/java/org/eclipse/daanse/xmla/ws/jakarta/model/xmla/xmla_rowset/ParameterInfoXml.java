@@ -15,6 +15,7 @@ package org.eclipse.daanse.xmla.ws.jakarta.model.xmla.xmla_rowset;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -26,14 +27,36 @@ public class ParameterInfoXml implements Serializable {
     @XmlTransient
     private static final long serialVersionUID = -2141241183459860742L;
 
+    /**
+     * The name of the parameter.
+     */
+    @XmlElement(name = "NAME")
     private String name;
 
+    /**
+     * The description of the parameter.
+     */
+    @XmlElement(name = "DESCRIPTION")
     private String description;
 
+    /**
+     * A Boolean that, when true, indicates that the parameter is
+     * optional.
+     */
+    @XmlElement(name = "OPTIONAL")
     private Boolean optional;
 
+    /**
+     * A Boolean that, when true, indicates that multiple values can be
+     * specified for this parameter.
+     */
+    @XmlElement(name = "REPEATABLE")
     private Boolean repeatable;
 
+    /**
+     * The index of the repeat group of this parameter.
+     */
+    @XmlElement(name = "REPEATGROUP")
     private Integer repeatGroup;
 
     public String getName() {

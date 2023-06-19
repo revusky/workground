@@ -131,21 +131,21 @@ public class MdSchemaMembersResponseRowXml extends AbstractMdSchemaResponseRowXm
      * The description of the member.
      */
     @XmlElement(name = "DESCRIPTION", required = false)
-    private Integer description;
+    private String description;
 
     /**
      * The expression for calculations, if the member is
      *     of type 4 (Formula).
      */
     @XmlElement(name = "EXPRESSION", required = false)
-    private Integer expression;
+    private String expression;
 
     /**
      * The value of the member's key column. Returns
      * NULL if the member has a composite key.
      */
     @XmlElement(name = "MEMBER_KEY", required = false)
-    private Integer memberKey;
+    private String memberKey;
 
     /**
      * When true, indicates that a member is a
@@ -291,27 +291,27 @@ public class MdSchemaMembersResponseRowXml extends AbstractMdSchemaResponseRowXm
         this.parentCount = parentCount;
     }
 
-    public Integer getDescription() {
+    public String getDescription() {
         return description;
     }
 
-    public void setDescription(Integer description) {
+    public void setDescription(String description) {
         this.description = description;
     }
 
-    public Integer getExpression() {
+    public String getExpression() {
         return expression;
     }
 
-    public void setExpression(Integer expression) {
+    public void setExpression(String expression) {
         this.expression = expression;
     }
 
-    public Integer getMemberKey() {
+    public String getMemberKey() {
         return memberKey;
     }
 
-    public void setMemberKey(Integer memberKey) {
+    public void setMemberKey(String memberKey) {
         this.memberKey = memberKey;
     }
 

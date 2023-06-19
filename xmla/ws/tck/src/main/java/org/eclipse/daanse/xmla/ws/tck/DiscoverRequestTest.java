@@ -1489,7 +1489,7 @@ class DiscoverRequestTest {
                             .isPresent().contains("memberUniqueName");
                         assertThat(r.memberType()).isNotNull()
                             .isPresent().contains(MemberTypeEnum.REGULAR_MEMBER);
-                        assertThat(r.measureCaption()).isNotNull()
+                        assertThat(r.memberCaption()).isNotNull()
                             .isPresent().contains("memberCaption");
                         assertThat(r.cubeSource()).isNotNull()
                             .isPresent().contains(CubeSourceEnum.CUBE);

@@ -122,19 +122,19 @@ public interface MdSchemaMembersResponseRow {
     /**
      * @return The description of the member.
      */
-    Optional<Integer> description();
+    Optional<String> description();
 
     /**
      * @return The expression for calculations, if the member is
      *     of type 4 (Formula).
      */
-    Optional<Integer> expression();
+    Optional<String> expression();
 
     /**
      * @return The value of the member's key column. Returns
      * NULL if the member has a composite key.
      */
-    Optional<Integer> memberKey();
+    Optional<String> memberKey();
 
     /**
      * @return When true, indicates that a member is a
