@@ -77,7 +77,6 @@ import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
 import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
 import org.eclipse.daanse.mdx.model.record.expression.SymbolLiteralR;
 import org.eclipse.daanse.mdx.model.record.select.AxisR;
-import org.eclipse.daanse.mdx.model.record.select.SelectDimensionPropertyListClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryAxesClauseR;
 import org.eclipse.daanse.mdx.model.record.select.SelectQueryEmptyClauseR;
 {
@@ -655,7 +654,7 @@ ObjectIdentifier parseIdentifier#void :
 }
   (
     objectIdentifier = parseNameObjectIdentifier
-  |
+    |
     objectIdentifier = parseKeyIdentifier
   )
   {
@@ -756,7 +755,7 @@ INJECT ASTCompoundId :
     }
 }  
 
-CompoundId parseCompoundId#CompoundId :
+parseCompoundId#CompoundId :
 {
   CompoundId compoundId;
   List < ObjectIdentifier > list = new ArrayList <> ();
@@ -773,9 +772,6 @@ CompoundId parseCompoundId#CompoundId :
       list.add(s);
     }
   )*
-  {
-    return CURRENT_NODE;
-  }
 ;
 
 
@@ -1289,38 +1285,31 @@ INJECT ASTCreateSetBodyClause :
 }  
 
 CreateSetBodyClause parseCreateSetBodyClause#CreateSetBodyClause :
-{
- CompoundId compoundId = null;
- Expression expression = null;
- //List<MemberPropertyDefinition> memberPropertyDefinitions = new LinkedList<>();
- //MemberPropertyDefinition memberPropertyDefinition = null;
-}
-
-  compoundId = parseCompoundId < AS > expression = parseExpression
+  parseCompoundId < AS > parseExpression
   {
     return CURRENT_NODE;
   }
 ;
 
 
-SelectDimensionPropertyListClause parseSelectDimensionPropertyListClause :
+INJECT ASTSelectDimensionPropertyListClause :
+   import java.util.List;
+   import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
+   implements org.eclipse.daanse.mdx.model.api.select.SelectDimensionPropertyListClause
+{
+  public List<CompoundId> properties() {
+     return childrenOfType(CompoundId.class);
+  }
+}
+
+parseSelectDimensionPropertyListClause#SelectDimensionPropertyListClause :
   (< DIMENSION >)?
-  {
-    List < CompoundId > cellProperties = new LinkedList<> ();
-  }
   < PROPERTIES >
-  {
-    cellProperties.add(parseCompoundId());
-  }
+  parseCompoundId
   (
     < COMMA >
-    {
-          cellProperties.add(parseCompoundId());
-    }
+    parseCompoundId
   )*
-  {
-    return new SelectDimensionPropertyListClauseR(cellProperties);
-  }
 ;
 
 INJECT ASTRefreshStatement :
@@ -1348,7 +1337,6 @@ INJECT ASTDMVStatement :
    import org.eclipse.daanse.mdx.model.api.expression.Expression;
    implements org.eclipse.daanse.mdx.model.api.DMVStatement;
 {
-
     public List<CompoundId> columns() {
         return childrenOfType(CompoundId.class);
     }
@@ -1405,24 +1393,20 @@ INJECT ASTSelectQueryAxisClause :
     };
 
     public SelectDimensionPropertyListClause selectDimensionPropertyListClause() {
-    //TODO
-       return null;
+       return firstChildOfType(SelectDimensionPropertyListClause.class);
     }
 }
 
 // <SelectQueryAxisClause> ::= [NON EMPTY] <set> [<dimProps>] ON <axis_name>
 SelectQueryAxisClause parseSelectQueryAxisClause#SelectQueryAxisClause :
 {
-  boolean nonEmpty = false;
-  SelectDimensionPropertyListClause selectDimensionPropertyListClause = null;
-  Expression expression;
   int n;
   Axis axis;
 }
-  (< NON > < EMPTY > { nonEmpty = true; })?
-  expression = parseExpression
+  (< NON > < EMPTY >) ?
+  parseExpression
   (
-    selectDimensionPropertyListClause = parseSelectDimensionPropertyListClause
+    parseSelectDimensionPropertyListClause
   )?
   < ON >
   (
@@ -1431,7 +1415,7 @@ SelectQueryAxisClause parseSelectQueryAxisClause#SelectQueryAxisClause :
       {
         n = Integer.valueOf(getToken(0).getImage()).intValue();
       }
-    | < AXIS > < LPAREN > < UNSIGNED_INTEGER_LITERAL >
+      | < AXIS > < LPAREN > < UNSIGNED_INTEGER_LITERAL >
       {
         n = Integer.valueOf(getToken(0).getImage()).intValue();
       }
