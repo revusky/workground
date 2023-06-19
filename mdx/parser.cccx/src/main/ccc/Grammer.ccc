@@ -42,6 +42,7 @@ import java.util.ListIterator;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 
+import org.eclipse.daanse.mdx.model.api.DrillthroughStatement;
 import org.eclipse.daanse.mdx.model.api.ExplainStatement;
 import org.eclipse.daanse.mdx.model.api.MdxStatement;
 import org.eclipse.daanse.mdx.model.api.SelectStatement;
@@ -58,7 +59,6 @@ import org.eclipse.daanse.mdx.model.api.select.Axis;
 import org.eclipse.daanse.mdx.model.api.select.CreateCellCalculationBodyClause;
 import org.eclipse.daanse.mdx.model.api.select.CreateMemberBodyClause;
 import org.eclipse.daanse.mdx.model.api.select.CreateSetBodyClause;
-import org.eclipse.daanse.mdx.model.api.select.MeasureBodyClause;
 import org.eclipse.daanse.mdx.model.api.select.MemberPropertyDefinition;
 import org.eclipse.daanse.mdx.model.api.select.SelectCellPropertyListClause;
 import org.eclipse.daanse.mdx.model.api.select.SelectDimensionPropertyListClause;
@@ -199,7 +199,7 @@ INJECT ASTDrillthroughStatement :
    }
 }   
 
-parseDrillthroughStatement#DrillthroughStatement :
+DrillthroughStatement parseDrillthroughStatement#DrillthroughStatement :
   < DRILLTHROUGH >
   (
     < MAXROWS > < UNSIGNED_INTEGER_LITERAL >
@@ -216,6 +216,9 @@ parseDrillthroughStatement#DrillthroughStatement :
       parseReturnItem 
     )*
   )?
+  {
+    return CURRENT_NODE;
+  }
 ;
 
 INJECT ASTExplainStatement :
@@ -250,25 +253,18 @@ INJECT ASTReturnItem :
 
 parseReturnItem#ReturnItem : parseCompoundId ;
 
-
 INJECT ASTCreateCellCalculationBodyClause : implements org.eclipse.daanse.mdx.model.api.select.CreateCellCalculationBodyClause;
 
 //https://learn.microsoft.com/en-us/sql/mdx/mdx-data-definition-create-cell-calculation?view=sql-server-ver16
-CreateCellCalculationBodyClause parseCreateCellCalculationBodyClause#CreateCellCalculationBodyClause:
+parseCreateCellCalculationBodyClause#CreateCellCalculationBodyClause:
  <NOT><NOT><NOT><NOT><NOT><NOT><NOT>
-  {
-    return CURRENT_NODE;
-  }
 ;
 
 INJECT ASTMeasureBodyClause : implements org.eclipse.daanse.mdx.model.api.select.MeasureBodyClause;
 
 // https://learn.microsoft.com/en-us/analysis-services/multidimensional-models/mdx/mdx-building-measures?view=asallproducts-allversions
-MeasureBodyClause parseMeasureBodyClause#MeasureBodyClause:
+parseMeasureBodyClause#MeasureBodyClause:
   <NOT><NOT><NOT><NOT><NOT><NOT><NOT>
-  {
-     return CURRENT_NODE;
-  }
 ;
 
 
@@ -338,9 +334,9 @@ SelectStatement parseSelectStatement#SelectStatement :
 
 
 parseSelectSubcubeClause#void :
- parseSelectSubcubeClauseName
- |
- parseSelectSubcubeClauseStatement
+  parseSelectSubcubeClauseName
+  |
+  parseSelectSubcubeClauseStatement
 ;
 
 
