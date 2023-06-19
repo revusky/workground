@@ -205,9 +205,6 @@ INJECT ASTDrillthroughStatement :
 }   
 
 parseDrillthroughStatement#DrillthroughStatement :
-{
-  SelectStatement selectStatement = null;
-}
   < DRILLTHROUGH >
   (
     < MAXROWS > < UNSIGNED_INTEGER_LITERAL >
@@ -215,7 +212,7 @@ parseDrillthroughStatement#DrillthroughStatement :
   (
     < FIRSTROWSET > < UNSIGNED_INTEGER_LITERAL >
   )?
-  selectStatement = parseSelectStatement
+  parseSelectStatement
   (
     < RETURN >
     parseReturnItem 
@@ -756,21 +753,9 @@ INJECT ASTCompoundId :
 }  
 
 parseCompoundId#CompoundId :
-{
-  CompoundId compoundId;
-  List < ObjectIdentifier > list = new ArrayList <> ();
-  ObjectIdentifier s;
-}
-  s = parseIdentifier
-  {
-    list.add(s);
-  }
+  parseIdentifier
   (
-    SCAN < DOT > =>
-    < DOT > s = parseIdentifier
-    {
-      list.add(s);
-    }
+    < DOT > parseIdentifier
   )*
 ;
 
@@ -791,14 +776,15 @@ Expression parseUnaliasedExpression :
       )
       );
     }
-  | < XOR > y = parseTerm5
+    | 
+    < XOR > y = parseTerm5
     {
       x = new CallExpressionR("XOR", CallExpression.Type.TERM_INFIX, List.of(
       x, y
       )
       );
     }
-  |
+    |
     // range 'm1 : m2' yields set of members
     < COLON > y = parseTerm5
     {
@@ -843,7 +829,8 @@ Expression parseTerm4 :
   {
     return x;
   }
-| < NOT > x = parseTerm4
+  | 
+  < NOT > x = parseTerm4
   {
     return new CallExpressionR("NOT", CallExpression.Type.TERM_PREFIX, List.of(
     x
@@ -1072,7 +1059,6 @@ Expression parsePrimary#PrimaryExpression :
     return CURRENT_NODE;
   }
 ;
-
 
 Expression objectIdentifierOrFuncall(Expression left) :
 {
