@@ -188,6 +188,7 @@ DrillthroughStatement parseDrillthroughStatement :
 {
   SelectStatement selectStatement = null;
   List < ReturnItem > returnItems = null;
+  ReturnItem item;
   Optional<Integer> maxRows = Optional.ofNullable(null);
   Optional<Integer> firstRowSet = Optional.ofNullable(null);
 }
@@ -206,7 +207,12 @@ DrillthroughStatement parseDrillthroughStatement :
   )?
   selectStatement = parseSelectStatement
   (
-    < RETURN > returnItems = parseReturnItems
+    < RETURN > {returnItems = new ArrayList<>();} 
+    item = parseReturnItem {returnItems.add(item);}
+    (
+      <COMMA> 
+      item = parseReturnItem {returnItems.add(item);}
+    )*
   )?
   {
     return new DrillthroughStatementR(maxRows, firstRowSet, selectStatement, returnItems);
@@ -225,27 +231,6 @@ ExplainStatement parseExplainStatement :
   )
   {
     return new ExplainStatementR(mdxStatement);
-  }
-;
-
-
-List < ReturnItem > parseReturnItems :
-{
-  List < ReturnItem > returnItems = new LinkedList<> ();
-  ReturnItem item;
-}
-  item = parseReturnItem
-  {
-    returnItems.add(item);
-  }
-  (
-    < COMMA > item = parseReturnItem
-    {
-      returnItems.add(item);
-    }
-  )*
-  {
-    return returnItems;
   }
 ;
 
@@ -387,17 +372,11 @@ INJECT ASTSelectSubcubeClauseStatement :
   implements org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseStatement
 {
     public SelectQueryClause selectQueryClause() {
-        for (Node n: children()) {
-            if (n instanceof SelectQueryClause) return (SelectQueryClause) n;
-        }
-        return null;
+        return firstChildOfType(SelectQueryClause.class);
     }
 
     public SelectSubcubeClause selectSubcubeClause() {
-        for (Node n: children()) {
-            if (n instanceof SelectSubcubeClause) return (SelectSubcubeClause) n;
-        }
-        return null;
+        return firstChildOfType(SelectSubcubeClause.class);
     }
 
     public Optional<SelectSlicerAxisClause> selectSlicerAxisClause() {
@@ -485,6 +464,7 @@ Optional<SelectSlicerAxisClause> parseSelectSlicerAxisClause#SelectSlicerAxisCla
 INJECT ASTSelectCellPropertyListClause :
    import java.util.List;
    import java.util.ArrayList;
+   import java.util.stream.Collectors;
    implements org.eclipse.daanse.mdx.model.api.select.SelectCellPropertyListClause
 {
    public boolean cell() {
@@ -492,13 +472,7 @@ INJECT ASTSelectCellPropertyListClause :
    }
 
    public List<String> properties() {
-      List<String> result = new ArrayList<>();
-      for (Node n : children()) {
-        if (n.getType() == ID) {
-          result.add(n.getImage());
-        }
-      }
-      return result;
+       return childrenOfType(ID).stream().map(n->n.getImage()).collect(Collectors.toList());
    }
 }
 
@@ -531,11 +505,7 @@ INJECT ASTCreateMemberBodyClause :
   }
 
   public List<MemberPropertyDefinition> memberPropertyDefinitions() {
-     List<MemberPropertyDefinition> result = new ArrayList<>();
-     for (Node n : children()) {
-       if (n instanceof MemberPropertyDefinition) result.add((MemberPropertyDefinition)n);
-     }
-     return result;
+     return childrenOfType(MemberPropertyDefinition.class);
   }
 }  
 
@@ -737,11 +707,7 @@ INJECT ASTKeyObjectIdentifier :
    implements org.eclipse.daanse.mdx.model.api.expression.KeyObjectIdentifier
 {
    public List<NameObjectIdentifier> nameObjectIdentifiers() {
-     List<NameObjectIdentifier> result = new ArrayList<>();
-     for (Node n : children()) {
-        result.add((NameObjectIdentifier) n);
-     }
-     return result;
+     return childrenOfType(NameObjectIdentifier.class);
    }
 
    @Override
@@ -795,13 +761,7 @@ INJECT ASTCompoundId :
   implements org.eclipse.daanse.mdx.model.api.expression.CompoundId
 {
     public List<ObjectIdentifier> objectIdentifiers() {
-       List<ObjectIdentifier> result = new ArrayList<>();
-       for (Node n : children()) {
-          if (n instanceof ObjectIdentifier) {
-            result.add((ObjectIdentifier)n);
-          }
-       }
-       return result;
+       return childrenOfType(ObjectIdentifier.class);
     }
 }  
 
