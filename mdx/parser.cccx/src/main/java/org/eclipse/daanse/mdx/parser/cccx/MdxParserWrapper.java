@@ -79,8 +79,9 @@ public class MdxParserWrapper implements org.eclipse.daanse.mdx.parser.api.MdxPa
     @Override
     public SelectQueryAsteriskClause parseSelectQueryAsteriskClause() throws MdxParserException {
         try {
-            return delegate.parseSelectQueryAsteriskClause();
-
+            //return delegate.parseSelectQueryAsteriskClause();
+            delegate.parseSelectCellPropertyListClause();
+            return (SelectQueryAsteriskClause) delegate.peekNode();
         } catch (Exception e) {
             throw new MdxParserException(e);
         } finally {
@@ -128,8 +129,8 @@ public class MdxParserWrapper implements org.eclipse.daanse.mdx.parser.api.MdxPa
     @Override
     public SelectSubcubeClause parseSelectSubcubeClause() throws MdxParserException {
         try {
-            return delegate.parseSelectSubcubeClause();
-
+            delegate.parseSelectSubcubeClause();
+            return (SelectSubcubeClause) delegate.peekNode();
         } catch (Exception e) {
             throw new MdxParserException(e);
         } finally {
@@ -139,8 +140,8 @@ public class MdxParserWrapper implements org.eclipse.daanse.mdx.parser.api.MdxPa
 
     public SelectWithClause parseSelectWithClause() throws MdxParserException {
         try {
-            return delegate.parseSelectWithClause();
-
+            delegate.parseSelectWithClause();
+            return (SelectWithClause) delegate.peekNode();
         } catch (Exception e) {
             throw new MdxParserException(e);
         } finally {
@@ -161,8 +162,8 @@ public class MdxParserWrapper implements org.eclipse.daanse.mdx.parser.api.MdxPa
 
     public Optional<SelectSlicerAxisClause> parseSelectSlicerAxisClause() throws MdxParserException {
         try {
-            return delegate.parseSelectSlicerAxisClause();
-
+            delegate.parseSelectSlicerAxisClause();
+            return Optional.of((SelectSlicerAxisClause) delegate.peekNode());
         } catch (Exception e) {
             throw new MdxParserException(e);
         } finally {
@@ -227,8 +228,8 @@ public class MdxParserWrapper implements org.eclipse.daanse.mdx.parser.api.MdxPa
 
     public SelectDimensionPropertyListClause parseSelectDimensionPropertyListClause() throws MdxParserException {
         try {
-            return delegate.parseSelectDimensionPropertyListClause();
-
+            delegate.parseSelectDimensionPropertyListClause();
+            return (SelectDimensionPropertyListClause) delegate.peekNode();
         } catch (Exception e) {
             throw new MdxParserException(e);
         } finally {

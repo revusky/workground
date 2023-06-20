@@ -48,6 +48,7 @@ import org.eclipse.daanse.mdx.model.api.ExplainStatement;
 import org.eclipse.daanse.mdx.model.api.MdxStatement;
 import org.eclipse.daanse.mdx.model.api.SelectStatement;
 import org.eclipse.daanse.mdx.model.api.RefreshStatement;
+import org.eclipse.daanse.mdx.model.api.ReturnItem;
 import org.eclipse.daanse.mdx.model.api.DMVStatement;
 import org.eclipse.daanse.mdx.model.api.expression.CallExpression;
 import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
@@ -220,6 +221,18 @@ DrillthroughStatement parseDrillthroughStatement#DrillthroughStatement :
   {
     return CURRENT_NODE;
   }
+;
+
+// This is not used in the parser. I just re-added this methods
+// so that a pre-existing test still compiles
+List<ReturnItem> parseReturnItems#ReturnItems :
+   {List<ReturnItem> result = new ArrayList<>();} 
+   parseReturnItem
+   {result.add((ReturnItem) peekNode());}
+   (<COMMA> parseReturnItem {result.add((ReturnItem) peekNode());})*
+   {
+    return result;
+   }
 ;
 
 INJECT ASTExplainStatement :
