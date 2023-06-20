@@ -116,7 +116,10 @@ INJECT LEXER_CLASS :
       if (commentNesting > 0) {
          switchTo(LexicalState.IN_MULTI_LINE_COMMENT);
       } else {
-        uncacheTokensFromTo(tok.getBeginOffset(), tok.getEndOffset());
+        // get rid of some gremlins!
+        uncacheTokensFromTo(commentStartOffset, tok.getEndOffset());
+        // Set the beginning of the comment to the right place!
+        tok.setBeginOffset(commentStartOffset);
       }
     }
     return tok;
