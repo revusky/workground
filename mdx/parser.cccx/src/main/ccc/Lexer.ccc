@@ -1,6 +1,6 @@
-
-
+ENSURE_FINAL_EOL;
 COPYRIGHT_BLURB="\n*\n* Copyright (c) 2023 Contributors to the Eclipse Foundation.\n*\n* This program and the accompanying materials are made\n* available under the terms of the Eclipse Public License 2.0\n* which is available at https://www.eclipse.org/legal/epl-2.0/\n*\n* SPDX-License-Identifier: EPL-2.0\n*\n* Contributors: see corresponding .ccc file\n";
+
 
 TOKEN :
   < AND : "AND" >
@@ -76,47 +76,52 @@ SKIP :
 ;
 
 
-/*
- * Comments
- * https://javacc.github.io/javacc/documentation/bnf.html#comments
- * additional --
- */
-
-< DEFAULT >
-MORE :
-  "//" : IN_SINGLE_LINE_COMMENT
-| < "/**" ~[ "/" ] > : IN_FORMAL_COMMENT
-| "--" : IN_SINGLE_LINE_COMMENT
-| "/*" : IN_MULTI_LINE_COMMENT
+UNPARSED : 
+  < SINGLE_LINE_COMMENT : ("//" | "--") (~["\n"])* "\n" > 
 ;
 
-
-< IN_SINGLE_LINE_COMMENT >
+<DEFAULT, IN_MULTI_LINE_COMMENT>
 UNPARSED :
-  < SINGLE_LINE_COMMENT :
-    "\n"
-  | "\r"
-  | "\r\n" > : DEFAULT
+  <SLASH_STAR : "/*"> : IN_MULTI_LINE_COMMENT
 ;
-
-
-< IN_FORMAL_COMMENT >
-UNPARSED :
-  < FORMAL_COMMENT : "*/" > : DEFAULT
-;
-
 
 < IN_MULTI_LINE_COMMENT >
 UNPARSED :
   < MULTI_LINE_COMMENT : "*/" > : DEFAULT
 ;
 
-
-< IN_SINGLE_LINE_COMMENT, IN_FORMAL_COMMENT, IN_MULTI_LINE_COMMENT >
-MORE :
+< IN_MULTI_LINE_COMMENT >
+SKIP :
   < ~[ ] >
 ;
 
+INJECT LEXER_CLASS :
+{
+  // It seems that multiline comments can nest 
+  // in MDX. So we have this little TOKEN_HOOK
+  // and these variables where we keep track
+  // of the nesting levels of the comments and
+  // where the outermost comment began.
+  private int commentNesting, commentStartOffset;
+
+  private Token TOKEN_HOOK(Token tok) {
+    if (tok.getType() == SLASH_STAR) {
+      if (commentNesting==0) {
+        commentStartOffset=tok.getBeginOffset();
+      }
+      commentNesting++;
+    }
+    if (tok.getType() == MULTI_LINE_COMMENT) {
+      --commentNesting;
+      if (commentNesting > 0) {
+         switchTo(LexicalState.IN_MULTI_LINE_COMMENT);
+      } else {
+        uncacheTokensFromTo(tok.getBeginOffset(), tok.getEndOffset());
+      }
+    }
+    return tok;
+  }
+}
 
 /*
  * Separators
@@ -198,14 +203,6 @@ TOKEN #NumericLiteral :
     ([ "0"-"9" ])+ (".")? ([ "0"-"9" ])*
   | "." ([ "0"-"9" ])+
   > 
-  |
-  // This does not seem to be used! (JR)
-  < FLOATING_POINT_LITERAL :
-    ([ "0"-"9" ])+ "." ([ "0"-"9" ])* (< EXPONENT >)? ([ "f", "F", "d", "D" ])?
-  | "." ([ "0"-"9" ])+ (< EXPONENT >)? ([ "f", "F", "d", "D" ])?
-  | ([ "0"-"9" ])+ < EXPONENT > ([ "f", "F", "d", "D" ])?
-  | ([ "0"-"9" ])+ (< EXPONENT >)? [ "f", "F", "d", "D" ]
-  >
   |
   < #EXPONENT : [ "e", "E" ] ([ "+", "-" ])? ([ "0"-"9" ])+ >
 ;
