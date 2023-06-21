@@ -25,6 +25,10 @@ class LargeStatementTest {
 
 	static String MDX = """
 			            WITH
+            /* This is a nested comment. Outer part.
+			         /* Inner comment */
+				Outer again.
+			*/
 			MEMBER [Customer].[Customer Geography].[Weight of Measure] AS CASE
 			WHEN [Measures].CurrentMember IS [Measures].[Internet Sales Amount] THEN Round(1/2, 4)
 			WHEN [Measures].CurrentMember IS [Measures].[Internet Tax Amount] THEN Round(1/2, 4)
