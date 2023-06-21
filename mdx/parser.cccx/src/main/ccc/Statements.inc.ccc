@@ -1,0 +1,543 @@
+/*
+* Copyright (c) 2023 Contributors to the Eclipse Foundation.
+*
+* This program and the accompanying materials are made
+* available under the terms of the Eclipse Public License 2.0
+* which is available at https://www.eclipse.org/legal/epl-2.0/
+*
+* SPDX-License-Identifier: EPL-2.0
+*
+* Contributors:
+*   SmartCity Jena - initial
+*   Stefan Bischof (bipolis.org) - initial
+*/
+
+// Breaking the statement related logic out 
+// into an INCLUDE
+
+INJECT PARSER_CLASS :
+  import org.eclipse.daanse.mdx.model.api.DrillthroughStatement;
+  import org.eclipse.daanse.mdx.model.api.ExplainStatement;
+  import org.eclipse.daanse.mdx.model.api.MdxStatement;
+  import org.eclipse.daanse.mdx.model.api.SelectStatement;
+  import org.eclipse.daanse.mdx.model.api.RefreshStatement;
+  import org.eclipse.daanse.mdx.model.api.DMVStatement;
+  import org.eclipse.daanse.mdx.model.api.select.Axis;
+  import org.eclipse.daanse.mdx.model.api.select.CreateCellCalculationBodyClause;
+  import org.eclipse.daanse.mdx.model.api.select.CreateMemberBodyClause;
+  import org.eclipse.daanse.mdx.model.api.select.CreateSetBodyClause;
+  import org.eclipse.daanse.mdx.model.api.select.MemberPropertyDefinition;
+  import org.eclipse.daanse.mdx.model.api.select.SelectCellPropertyListClause;
+  import org.eclipse.daanse.mdx.model.api.select.SelectDimensionPropertyListClause;
+  import org.eclipse.daanse.mdx.model.api.select.SelectQueryAsteriskClause;
+  import org.eclipse.daanse.mdx.model.api.select.SelectQueryAxesClause;
+  import org.eclipse.daanse.mdx.model.api.select.SelectQueryAxisClause;
+  import org.eclipse.daanse.mdx.model.api.select.SelectQueryClause;
+  import org.eclipse.daanse.mdx.model.api.select.SelectSlicerAxisClause;
+  import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClause;
+  import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseName;
+  import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseStatement;
+  import org.eclipse.daanse.mdx.model.api.ReturnItem;
+
+// ----------------------------------------------------------------------------
+// MDX Statement
+//
+// <statement> ::= <selectStatement>
+//                   | <drillthroughStatement>
+//                   | <explainStatement>
+//
+// <selectStatement> ::= [WITH <formulaSpecification>]
+//                         SELECT [<SelectQueryAxisClause>
+//                                [, <SelectQueryAxisClause>...]]
+//                         FROM [<cubeSpecification>]
+//                         [WHERE <slicerSpecification>]
+//                         [<cellProps>]
+//
+// <drillthroughStatment> ::=
+//     DRILLTHROUGH
+//     [ MAXROWS <count> ]
+//     [ FIRSTROWSET <count> ]
+//     <selectStatement>
+//     [ RETURN <memberOrAttribute> [, <memberOrAttribute>...] ]
+//
+// <explainStatement> ::=
+//     EXPLAIN PLAN FOR ( <selectStatement> | <drillthroughStatement> )
+//
+MdxStatement parseMdxStatement#Root :
+  (
+    parseSelectStatement
+  	|
+  	parseDrillthroughStatement
+    |
+    parseExplainStatement
+  )
+  {MdxStatement result = (MdxStatement) peekNode();} 
+  < EOF >
+  {
+    return result;
+  }
+;
+
+INJECT ASTDrillthroughStatement :
+   import java.util.List;
+   import java.util.Optional;
+   import org.eclipse.daanse.mdx.model.api.ReturnItem;
+   import org.eclipse.daanse.mdx.model.api.SelectStatement;
+   implements org.eclipse.daanse.mdx.model.api.DrillthroughStatement
+{
+   public Optional<Integer> maxRows() {
+      Node maxRows = firstChildOfType(MAXROWS);
+      return maxRows == null ? Optional.empty() 
+                             : Optional.of(Integer.valueOf(maxRows.nextSibling().getImage()));
+   }
+
+   public Optional<Integer> firstRowSet() {
+      Node firstRow = firstChildOfType(FIRSTROWSET);
+      return firstRow == null ? Optional.empty() 
+                              : Optional.of(Integer.valueOf(firstRow.nextSibling().getImage()));
+   }
+
+   public SelectStatement selectStatement() {
+      return firstChildOfType(SelectStatement.class);
+   }
+
+   public List<ReturnItem> returnItems() {
+      return childrenOfType(ReturnItem.class);
+   }
+}   
+
+DrillthroughStatement parseDrillthroughStatement#DrillthroughStatement :
+  < DRILLTHROUGH >
+  (
+    < MAXROWS > < UNSIGNED_INTEGER_LITERAL >
+  )?
+  (
+    < FIRSTROWSET > < UNSIGNED_INTEGER_LITERAL >
+  )?
+  parseSelectStatement
+  (
+    < RETURN >
+    parseReturnItem 
+    (
+      <COMMA> 
+      parseReturnItem 
+    )*
+  )?
+  {
+    return CURRENT_NODE;
+  }
+;
+
+INJECT ASTExplainStatement :
+   import org.eclipse.daanse.mdx.model.api.MdxStatement;
+   implements org.eclipse.daanse.mdx.model.api.ExplainStatement
+{
+    public MdxStatement mdxStatement() {
+      return firstChildOfType(MdxStatement.class);
+    }
+}
+
+ExplainStatement parseExplainStatement#ExplainStatement :
+  < EXPLAIN > < PLAN> < FOR >
+  (
+    parseSelectStatement
+    |
+    parseDrillthroughStatement
+  )
+  {
+    return CURRENT_NODE;
+  }
+;
+
+INJECT ASTSelectDimensionPropertyListClause :
+   import java.util.List;
+   import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
+   implements org.eclipse.daanse.mdx.model.api.select.SelectDimensionPropertyListClause
+{
+  public List<CompoundId> properties() {
+     return childrenOfType(CompoundId.class);
+  }
+}
+
+parseSelectDimensionPropertyListClause#SelectDimensionPropertyListClause :
+  (< DIMENSION >)?
+  < PROPERTIES >
+  parseCompoundId
+  (
+    < COMMA >
+    parseCompoundId
+  )*
+;
+
+INJECT ASTRefreshStatement :
+   import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
+   implements org.eclipse.daanse.mdx.model.api.RefreshStatement;
+{
+   public NameObjectIdentifier cubeName() {
+      return (NameObjectIdentifier) getChild(2);
+   }
+}
+
+RefreshStatement parseRefreshStatement#RefreshStatement :
+  < REFRESH > 
+  < CUBE >  
+  parseNameObjectIdentifier
+  {
+     return CURRENT_NODE;
+  }
+;
+
+INJECT ASTDMVStatement :
+   import java.util.List;
+   import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
+   import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
+   import org.eclipse.daanse.mdx.model.api.expression.Expression;
+   implements org.eclipse.daanse.mdx.model.api.DMVStatement;
+{
+    public List<CompoundId> columns() {
+        return childrenOfType(CompoundId.class);
+    }
+
+    public NameObjectIdentifier table() {
+       return (NameObjectIdentifier) firstChildOfType(DOT).nextSibling();
+    }
+
+    public Expression where() {
+        Node where = firstChildOfType(WHERE);
+        return where == null ? null
+                             : (Expression) where.nextSibling();
+    }
+}
+
+DMVStatement parseDMVStatement#DMVStatement :
+  < SELECT >
+  (
+    parseCompoundId
+    (
+        < COMMA > parseCompoundId
+    )*
+  )?
+  < FROM > 
+  < SYSTEM_CUBE >
+  < DOT > 
+  parseNameObjectIdentifier
+  (
+     < WHERE > parseExpression()
+  )?
+  {
+     return CURRENT_NODE;
+  }
+;
+
+INJECT ASTSelectQueryAxisClause :
+   import org.eclipse.daanse.mdx.model.api.expression.Expression;
+   import org.eclipse.daanse.mdx.model.api.select.Axis;
+   import org.eclipse.daanse.mdx.model.api.select.SelectDimensionPropertyListClause;
+   implements org.eclipse.daanse.mdx.model.api.select.SelectQueryAxisClause
+{
+    public boolean nonEmpty() {
+       return getChild(0).getType() == NON && getChild(1).getType() == EMPTY;
+    }
+
+    public Expression expression() {
+    //TODO
+      return null;
+    };
+
+    public Axis axis() {
+    //TODO
+       return null;
+    };
+
+    public SelectDimensionPropertyListClause selectDimensionPropertyListClause() {
+       return firstChildOfType(SelectDimensionPropertyListClause.class);
+    }
+}
+
+// <SelectQueryAxisClause> ::= [NON EMPTY] <set> [<dimProps>] ON <axis_name>
+SelectQueryAxisClause parseSelectQueryAxisClause#SelectQueryAxisClause :
+  (< NON > < EMPTY >) ?
+  parseExpression
+  (
+    parseSelectDimensionPropertyListClause
+  )?
+  < ON >
+  (
+    (
+      < UNSIGNED_INTEGER_LITERAL >
+      | 
+      < AXIS >
+      < LPAREN > 
+      < UNSIGNED_INTEGER_LITERAL >
+      < RPAREN >
+    )
+    |
+    (
+      < COLUMNS >
+      | 
+      < ROWS >
+      | 
+      < PAGES >
+      | 
+      < SECTIONS >
+      | 
+      < CHAPTERS >
+    )
+  )
+  {
+    return CURRENT_NODE;
+  }
+;
+
+INJECT ASTCreateSetBodyClause :
+  import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
+  import org.eclipse.daanse.mdx.model.api.expression.Expression;
+  implements org.eclipse.daanse.mdx.model.api.select.CreateSetBodyClause
+{
+   public CompoundId compoundId() {
+      return (CompoundId) getChild(0);
+   }
+
+   public Expression expression() {
+      return (Expression) getChild(2);
+   }
+}  
+
+CreateSetBodyClause parseCreateSetBodyClause#CreateSetBodyClause :
+  parseCompoundId < AS > parseExpression
+  {
+    return CURRENT_NODE;
+  }
+;
+
+INJECT ASTSelectCellPropertyListClause :
+   import java.util.List;
+   import java.util.ArrayList;
+   import java.util.stream.Collectors;
+   implements org.eclipse.daanse.mdx.model.api.select.SelectCellPropertyListClause
+{
+   public boolean cell() {
+      return getChild(0).getType() == CELL;
+   }
+
+   public List<String> properties() {
+       return childrenOfType(ID).stream().map(n->n.getImage()).collect(Collectors.toList());
+   }
+}
+
+SelectCellPropertyListClause parseSelectCellPropertyListClause#SelectCellPropertyListClause :
+  (< CELL >)?
+  < PROPERTIES > 
+  <ID>
+  (
+    < COMMA > <ID>
+  )*
+  {
+    return CURRENT_NODE;
+  }
+;
+
+INJECT ASTSelectSlicerAxisClause :
+   import org.eclipse.daanse.mdx.model.api.expression.Expression;
+   implements org.eclipse.daanse.mdx.model.api.select.SelectSlicerAxisClause;
+{
+    public Expression expression() {
+      return (Expression) getChild(1);
+    }
+}
+
+parseSelectSlicerAxisClause#SelectSlicerAxisClause :
+  < WHERE > 
+  parseExpression
+;
+
+
+INJECT ASTSelectQueryAxesClause :
+   import java.util.List;
+   import org.eclipse.daanse.mdx.model.api.select.SelectQueryAxisClause;
+   implements org.eclipse.daanse.mdx.model.api.select.SelectQueryAxesClause
+{
+   public List<SelectQueryAxisClause> selectQueryAxisClauses() {
+      return childrenOfType(SelectQueryAxisClause.class);
+   }
+}   
+
+SelectQueryAxesClause parseSelectQueryAxesClause#SelectQueryAxesClause :
+  parseSelectQueryAxisClause
+  (
+    < COMMA > 
+    parseSelectQueryAxisClause
+  )*
+  {
+    return CURRENT_NODE;
+  }
+;
+
+
+INJECT ASTSelectSubcubeClauseStatement :
+  import java.util.Optional;
+  import org.eclipse.daanse.mdx.model.api.select.SelectQueryClause;
+  import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClause;
+  import org.eclipse.daanse.mdx.model.api.select.SelectSlicerAxisClause;
+  implements org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseStatement
+{
+    public SelectQueryClause selectQueryClause() {
+        return firstChildOfType(SelectQueryClause.class);
+    }
+
+    public SelectSubcubeClause selectSubcubeClause() {
+        return firstChildOfType(SelectSubcubeClause.class);
+    }
+
+    public Optional<SelectSlicerAxisClause> selectSlicerAxisClause() {
+      return Optional.ofNullable(firstChildOfType(SelectSlicerAxisClause.class));
+    }
+}  
+
+parseSelectSubcubeClauseStatement#SelectSubcubeClauseStatement :
+  < LPAREN > 
+  < SELECT >
+  (
+    parseSelectQueryAsteriskClause
+    |
+    parseSelectQueryAxesClause
+  )?
+  < FROM > 
+  parseSelectSubcubeClause
+  (
+    parseSelectSlicerAxisClause
+  )?
+  < RPAREN >
+;
+
+INJECT ASTSelectQueryAsteriskClause : implements org.eclipse.daanse.mdx.model.api.select.SelectQueryAsteriskClause;
+
+parseSelectQueryAsteriskClause#SelectQueryAsteriskClause :
+  < ASTERISK >
+;
+
+INJECT ASTSelectStatement :
+   import java.util.List;
+   import java.util.Optional;
+   import org.eclipse.daanse.mdx.model.api.select.SelectWithClause;
+   import org.eclipse.daanse.mdx.model.api.select.SelectQueryClause;
+   import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClause;
+   import org.eclipse.daanse.mdx.model.api.select.SelectSlicerAxisClause;
+   import org.eclipse.daanse.mdx.model.api.select.SelectCellPropertyListClause;
+   implements org.eclipse.daanse.mdx.model.api.SelectStatement;
+{
+    public List<SelectWithClause> selectWithClauses() {
+        return childrenOfType(SelectWithClause.class);
+    } 
+
+    public SelectQueryClause selectQueryClause() {
+        return firstChildOfType(SelectQueryClause.class);
+    }
+
+    public SelectSubcubeClause selectSubcubeClause() {
+        return firstChildOfType(SelectSubcubeClause.class);
+    }
+
+    public Optional<SelectSlicerAxisClause> selectSlicerAxisClause() {
+        return Optional.ofNullable(firstChildOfType(SelectSlicerAxisClause.class));
+    };
+
+    public Optional<SelectCellPropertyListClause> selectCellPropertyListClause() {
+        return Optional.ofNullable(firstChildOfType(SelectCellPropertyListClause.class));
+    };   
+}
+
+//https://learn.microsoft.com/en-us/sql/mdx/mdx-data-manipulation-select?view=sql-server-ver16
+SelectStatement parseSelectStatement#SelectStatement :
+  (
+    < WITH > (parseSelectWithClause)+
+  )?
+  < SELECT >
+  (
+    parseSelectQueryAsteriskClause
+    |
+    parseSelectQueryAxesClause
+  )?
+  < FROM > 
+  parseSelectSubcubeClause
+  (
+    parseSelectSlicerAxisClause
+  )?
+  (
+    parseSelectCellPropertyListClause
+  )?
+  {
+     return CURRENT_NODE;
+  }
+;
+
+
+parseSelectSubcubeClause#void :
+  parseSelectSubcubeClauseName
+  |
+  parseSelectSubcubeClauseStatement
+;
+
+
+INJECT ASTSelectSubcubeClauseName :
+   import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
+   implements org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseName
+{
+   public NameObjectIdentifier cubeName() {
+      return (NameObjectIdentifier) getChild(0);
+   }
+}   
+
+SelectSubcubeClauseName parseSelectSubcubeClauseName#SelectSubcubeClauseName :
+  parseNameObjectIdentifier
+  {
+    return CURRENT_NODE;
+  }
+;
+
+INJECT ASTMeasureBodyClause : implements org.eclipse.daanse.mdx.model.api.select.MeasureBodyClause;
+
+// https://learn.microsoft.com/en-us/analysis-services/multidimensional-models/mdx/mdx-building-measures?view=asallproducts-allversions
+parseMeasureBodyClause#MeasureBodyClause:
+  <NOT><NOT><NOT><NOT><NOT><NOT><NOT>
+;
+
+
+// https://docs.oracle.com/cd/E57185_01/ESBTR/mdx_grammar_rules.html
+parseSelectWithClause#void :
+  ( <CELL> <CALCULATION> parseCreateCellCalculationBodyClause
+  | ("CALCULATED")? < MEMBER > parseCreateMemberBodyClause
+  | < SET > parseCreateSetBodyClause
+  | <MEASURE>  parseMeasureBodyClause
+  )
+;
+
+INJECT ASTReturnItem :
+  import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
+  implements org.eclipse.daanse.mdx.model.api.ReturnItem
+{
+   public CompoundId compoundId() {
+     return (CompoundId) getChild(0);
+   }
+}
+
+parseReturnItem#ReturnItem : parseCompoundId ;
+
+INJECT ASTCreateCellCalculationBodyClause : implements org.eclipse.daanse.mdx.model.api.select.CreateCellCalculationBodyClause;
+
+//https://learn.microsoft.com/en-us/sql/mdx/mdx-data-definition-create-cell-calculation?view=sql-server-ver16
+parseCreateCellCalculationBodyClause#CreateCellCalculationBodyClause:
+ <NOT><NOT><NOT><NOT><NOT><NOT><NOT>
+;
+
+// This is not used in the parser. I just re-added this methods
+// so that a pre-existing test still compiles
+List<ReturnItem> parseReturnItems#ReturnItems :
+   {List<ReturnItem> result = new ArrayList<>();} 
+   parseReturnItem
+   {result.add((ReturnItem) peekNode());}
+   (<COMMA> parseReturnItem {result.add((ReturnItem) peekNode());})*
+   {
+    return result;
+   }
+;
