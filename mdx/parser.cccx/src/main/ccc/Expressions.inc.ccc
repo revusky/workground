@@ -1,0 +1,720 @@
+Expression parseExpression :
+{
+  Expression expression;
+  ObjectIdentifier objectIdentifier;
+}
+  expression = parseUnaliasedExpression
+  (
+    < AS > 
+    objectIdentifier = parseIdentifier
+    {
+      CompoundId compoundId = new CompoundIdR(List.of(objectIdentifier));
+      expression = new CallExpressionR("AS", CallExpression.Type.TERM_INFIX, List.of(
+      expression, compoundId
+      )
+      );
+    }
+  )*
+  {
+    return expression;
+  }
+;
+
+
+Expression parseExpressionOrEmpty :
+{
+  Expression expression;
+}
+  expression = parseExpression
+  {
+    return expression;
+  }
+  | /* empty */
+  {
+    return new CallExpressionR("", CallExpression.Type.EMPTY, List.of());
+  }
+;
+
+
+// Comma-separated list of expressions, some of which may be empty. Used
+// for functions.
+List < Expression > expOrEmptyList :
+{
+  Expression expression;
+  List < Expression > list = new LinkedList<>();
+}
+  expression = parseExpressionOrEmpty
+  {
+    list.add(expression);
+  }
+  (
+    < COMMA >
+    expression = parseExpressionOrEmpty
+    {
+      list.add(expression);
+    }
+  )*
+  {
+    return list;
+  }
+;
+
+
+// List of expressions, none of which may be empty.
+List < Expression > expList :
+{
+  Expression expression;
+  List < Expression > list = new LinkedList<>();
+}
+  expression = parseExpression
+  {
+    list.add(expression);
+  }
+  (
+    < COMMA >
+    expression = parseExpression
+    {
+      list.add(expression);
+    }
+  )*
+  {
+    return list;
+  }
+;
+
+
+Expression parseExpressionEof :
+{
+  Expression expression;
+}
+  expression = parseExpression < EOF >
+  {
+    return expression;
+  }
+;
+
+
+ObjectIdentifier parseIdentifier#void :
+{
+  ObjectIdentifier objectIdentifier;
+}
+  (
+    objectIdentifier = parseNameObjectIdentifier
+    |
+    objectIdentifier = parseKeyIdentifier
+  )
+  {
+    return objectIdentifier;
+  }
+;
+
+INJECT ASTNameObjectIdentifier :
+  implements org.eclipse.daanse.mdx.model.api.expression.SymbolLiteral,
+             org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier
+{
+  @Property Quoting quoting = Quoting.UNQUOTED;
+  @Property String name;
+  public Quoting quoting() {return getQuoting();}
+  public String name() {return getName();}
+  public String value() {return getName();}
+}
+
+NameObjectIdentifier parseNameObjectIdentifier#NameObjectIdentifier :
+ (
+  parseKeyword {CURRENT_NODE.setName(getTokenImage(0));}
+  |
+  < ID > {CURRENT_NODE.setName(getTokenImage(0));}
+  |
+  < ATSIGN > < ID > { CURRENT_NODE.setName("@" + getTokenImage(0)); }
+  | 
+  < QUOTED_ID >
+  {
+    String name = stripQuotes(getTokenImage(0), "[", "]", "]]");
+    CURRENT_NODE.setName(name);
+    CURRENT_NODE.setQuoting(ObjectIdentifier.Quoting.QUOTED);
+  }
+ )
+ {return CURRENT_NODE;}
+;
+
+
+INJECT ASTKeyObjectIdentifier :
+   import java.util.List;
+   import java.util.ArrayList;
+   import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
+   implements org.eclipse.daanse.mdx.model.api.expression.KeyObjectIdentifier
+{
+   public List<NameObjectIdentifier> nameObjectIdentifiers() {
+     return childrenOfType(NameObjectIdentifier.class);
+   }
+
+   @Override
+   public Quoting quoting() {
+       return Quoting.KEY;
+   }
+}
+
+// for example '&foo&[1]&bar' in '[x].&foo&[1]&bar.[y]'
+KeyObjectIdentifier parseKeyIdentifier#KeyObjectIdentifier :
+  ( parseAmpId )+
+  {
+    return CURRENT_NODE;
+  }
+;
+
+
+NameObjectIdentifier parseAmpId#NameObjectIdentifier :
+ (
+  < AMP_QUOTED_ID >
+  {
+    String name = stripQuotes(getTokenImage(0), "&[", "]", "]]");
+    CURRENT_NODE.setName(name);
+    CURRENT_NODE.setQuoting(ObjectIdentifier.Quoting.QUOTED);
+  }
+  |
+  < AMP_UNQUOTED_ID >
+  {
+    CURRENT_NODE.setName(getTokenImage(0).substring(1));
+  }
+ )
+ {return CURRENT_NODE;}
+;
+
+
+// a keyword that is not a RESERVED_WORD could be used as identifier
+String parseKeyword :
+  (
+    < DIMENSION >
+  | < PROPERTIES >
+  )
+  {
+    return getTokenImage(0);
+  }
+;
+
+INJECT ASTCompoundId :
+  import java.util.List;
+  import java.util.ArrayList;
+  import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier;
+  implements org.eclipse.daanse.mdx.model.api.expression.CompoundId
+{
+    public List<ObjectIdentifier> objectIdentifiers() {
+       return childrenOfType(ObjectIdentifier.class);
+    }
+}  
+
+parseCompoundId#CompoundId :
+  parseIdentifier
+  (
+    < DOT > parseIdentifier
+  )*
+;
+
+Expression parseUnaliasedExpression :
+{
+  Expression x;
+  Expression y;
+}
+  x = parseTerm5
+  (
+    < OR > y = parseTerm5
+    {
+      x = new CallExpressionR("OR", CallExpression.Type.TERM_INFIX, List.of(
+      x, y
+      )
+      );
+    }
+    | 
+    < XOR > y = parseTerm5
+    {
+      x = new CallExpressionR("XOR", CallExpression.Type.TERM_INFIX, List.of(
+      x, y
+      )
+      );
+    }
+    |
+    // range 'm1 : m2' yields set of members
+    < COLON > y = parseTerm5
+    {
+      x = new CallExpressionR(":", CallExpression.Type.TERM_INFIX, List.of(
+      x, y
+      )
+      );
+    }
+  )*
+  {
+    return x;
+  }
+;
+
+
+Expression parseTerm5 :
+{
+  Expression x;
+  Expression y;
+}
+  x = parseTerm4
+  (
+    < AND > y = parseTerm4
+    {
+      x = new CallExpressionR("AND", CallExpression.Type.TERM_INFIX, List.of(
+      x, y
+      )
+      );
+    }
+  )*
+  {
+    return x;
+  }
+;
+
+
+Expression parseTerm4 :
+{
+  Expression x;
+}
+  x = parseTerm3
+  {
+    return x;
+  }
+  | 
+  < NOT > x = parseTerm4
+  {
+    return new CallExpressionR("NOT", CallExpression.Type.TERM_PREFIX, List.of(
+    x
+    )
+    );
+  }
+;
+
+
+Expression parseTerm3 :
+{
+  Expression x;
+  Expression y;
+  Token op;
+}
+  x = parseTerm2
+  (
+    // e.g. "1 < 5"
+    (
+      < EQ >
+      {
+        op = getToken(0);
+      }
+    | < NE >
+      {
+        op = getToken(0);
+      }
+    | < LT >
+      {
+        op = getToken(0);
+      }
+    | < GT >
+      {
+        op = getToken(0);
+      }
+    | < LE >
+      {
+        op = getToken(0);
+      }
+    | < GE >
+      {
+        op = getToken(0);
+      }
+    )
+    y = parseTerm2
+    {
+      x = new CallExpressionR(op.getImage(), CallExpression.Type.TERM_INFIX, List.of(
+      x, y
+      )
+      );
+    }
+  |
+    // We expect a shift-reduce conflict here, because NULL is a literal and
+    // so is a valid argument to the IS operator. We want to shift.
+    SCAN 2 =>
+    < IS > < NULL >
+    {
+      x = new CallExpressionR("IS NULL", CallExpression.Type.TERM_POSTFIX, List.of(
+      x
+      )
+      );
+    }
+  |
+    // e.g. "x IS y"; but "x IS NULL" is handled elsewhere
+    SCAN 2 =>
+    < IS > y = parseTerm2
+    {
+      x = new CallExpressionR("IS", CallExpression.Type.TERM_INFIX, List.of(
+      x, y
+      )
+      );
+    }
+  | < IS > < EMPTY >
+    {
+      x = new CallExpressionR(
+      "IS EMPTY", CallExpression.Type.TERM_POSTFIX, List.of(x));
+    }
+  | < MATCHES > y = parseTerm2
+    {
+      x = new CallExpressionR("MATCHES", CallExpression.Type.TERM_INFIX, List.of(
+      x, y
+      )
+      );
+    }
+  | SCAN 2 =>
+    < NOT > < MATCHES > y = parseTerm2
+    {
+      x = new CallExpressionR(
+      "NOT", CallExpression.Type.TERM_PREFIX, List.of(
+      new CallExpressionR(
+      "MATCHES", CallExpression.Type.TERM_INFIX, List.of(
+      x, y
+      )
+      )
+      )
+      );
+    }
+  | < IN > y = parseTerm2
+    {
+      x = new CallExpressionR("IN", CallExpression.Type.TERM_INFIX, List.of(
+      x, y
+      )
+      );
+    }
+  | < NOT > < IN > y = parseTerm2
+    {
+      x = new CallExpressionR(
+      "NOT", CallExpression.Type.TERM_PREFIX, List.of(
+      new CallExpressionR(
+      "IN", CallExpression.Type.TERM_INFIX, List.of(
+      x, y
+      )
+      )
+      )
+      );
+    }
+  )*
+  {
+    return x;
+  }
+;
+
+
+Expression parseTerm2 :
+{
+  Expression x;
+  Expression y;
+}
+  x = parseTerm
+  (
+    < PLUS > y = parseTerm
+    {
+      x = new CallExpressionR("+", CallExpression.Type.TERM_INFIX, List.of(
+      x, y
+      )
+      );
+    }
+  | < MINUS > y = parseTerm
+    {
+      x = new CallExpressionR("-", CallExpression.Type.TERM_INFIX, List.of(
+      x, y
+      )
+      );
+    }
+  | < CONCAT > y = parseTerm
+    {
+      x = new CallExpressionR("||", CallExpression.Type.TERM_INFIX, List.of(
+      x, y
+      )
+      );
+    }
+  )*
+  {
+    return x;
+  }
+;
+
+
+Expression parseTerm :
+{
+  Expression x;
+  Expression y;
+}
+  x = parseFactor
+  (
+    < ASTERISK > y = parseFactor
+    {
+      x = new CallExpressionR("*", CallExpression.Type.TERM_INFIX, List.of(
+      x, y
+      )
+      );
+    }
+  | < SOLIDUS > y = parseFactor
+    {
+      x = new CallExpressionR("/", CallExpression.Type.TERM_INFIX, List.of(
+      x, y
+      )
+      );
+    }
+  )*
+  {
+    return x;
+  }
+;
+Expression parseFactor :
+{
+  Expression p;
+}
+  p = parsePrimary
+  {
+    return p;
+  }
+| < PLUS > p = parsePrimary
+  {
+    return p;
+  }
+| < MINUS > p = parsePrimary
+  {
+    return new CallExpressionR("-", CallExpression.Type.TERM_PREFIX, List.of(
+    p
+    )
+    );
+  }
+| < EXISTING > p = parsePrimary
+  {
+    return new CallExpressionR("Existing", CallExpression.Type.TERM_PREFIX, List.of(
+    p
+    )
+    );
+  }
+;
+
+INJECT ASTPrimaryExpression : implements org.eclipse.daanse.mdx.model.api.expression.Expression
+
+Expression parsePrimary#PrimaryExpression :
+{
+  Expression expression;
+}
+  expression = parseAtom
+  (
+    < DOT > 
+    expression = objectIdentifierOrFuncall(expression)
+  )*
+  {
+    return CURRENT_NODE;
+  }
+;
+
+Expression objectIdentifierOrFuncall(Expression left) :
+{
+  ObjectIdentifier objectIdentifier;
+  List < Expression > argList = null;
+}
+  objectIdentifier = parseIdentifier
+  (
+    < LPAREN >
+    (
+      argList = expOrEmptyList
+    )
+    < RPAREN >
+  )?
+  {
+    return createCall(left, objectIdentifier, argList);
+  }
+;
+
+parseLiteral#void :
+  <SINGLE_QUOTED_STRING>
+  |
+  <DOUBLE_QUOTED_STRING>
+  |
+  <UNSIGNED_INTEGER_LITERAL>
+  |
+  <DECIMAL_NUMERIC_LITERAL>
+  |
+  <APPROX_NUMERIC_LITERAL>
+  |
+  <NULL>
+;
+
+INJECT ASTCastExpression :
+   import java.util.List;
+   import org.eclipse.daanse.mdx.model.api.expression.Expression;
+   import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
+   import org.eclipse.daanse.mdx.model.api.expression.CallExpression.Type;
+   implements org.eclipse.daanse.mdx.model.api.expression.CallExpression
+{
+    @Property Expression expression;
+
+    public String name() {
+      return "CAST";
+    }
+
+    public Type type() {
+      return Type.CAST;
+    }
+
+    public List<Expression> expressions() {
+      NameObjectIdentifier noi = firstChildOfType(NameObjectIdentifier.class);
+      return List.of(getExpression(), noi);
+    }
+}
+
+Expression parseCastExpression#CastExpression :
+{
+  Expression expression;
+}
+  <CAST>
+  <LPAREN>
+  expression = parseUnaliasedExpression
+  {CURRENT_NODE.setExpression(expression);}
+  <AS>
+  parseNameObjectIdentifier 
+  <RPAREN>
+  {
+    return CURRENT_NODE;
+  }
+;
+Expression parseExpressionList#void :
+{
+   List<Expression> expressions;
+}
+  < LPAREN > expressions = expList < RPAREN >
+  {
+    // Whereas ([Sales],[Time]) and () are tuples, ([Sales]) and (5)
+    // are just expressions.
+    return new CallExpressionR(
+    "()", CallExpression.Type.PARENTHESES, expressions);
+  }
+;
+
+Expression parseTuple#void :
+{
+   List<Expression> expressions;
+}
+  // set built from sets/tuples
+  < LBRACE >
+  (
+    SCAN < RBRACE > =>
+    {
+      expressions = Collections.emptyList();
+    }
+    |
+    expressions = expList
+  )
+  < RBRACE >
+  {
+    return new CallExpressionR(
+    "{}", CallExpression.Type.BRACES, expressions);
+  }
+;
+
+Expression parseOnlyName#void :
+   parseNameObjectIdentifier ASSERT ~(<BANG>|<LPAREN>) =>||
+   {
+      return (Expression) peekNode();
+   }
+;
+
+Expression parseMaybeBangMaybeFunctionCall#void :
+  // Function call "foo(a, b)" or "whiz!bang!foo(a, b)".
+  // Properties "x.PROP" and methods "exp.meth(a)" are in primary().
+{
+  Expression expression;
+  NameObjectIdentifier nameObjectIdentifier;
+  List < Expression > expressions = null;
+}
+  nameObjectIdentifier = parseNameObjectIdentifier
+  (
+    < BANG > nameObjectIdentifier = parseNameObjectIdentifier
+    {
+    // We support the syntax for qualifying function names with package
+    // names separated by bang ('!'), e.g. 'whiz!bang!foo(a, b)'
+    // but currently we ignore the qualifiers. The previous example is
+    // equivalent to 'foo(a, b)'.
+    }
+  )*
+  (
+    < LPAREN >
+    (
+      SCAN < RPAREN > =>
+      {
+        expressions = Collections.emptyList();
+      }
+      |
+      expressions = expOrEmptyList
+    )
+    < RPAREN >
+  )?
+  {
+    return createCall(null, nameObjectIdentifier, expressions);
+  }
+;
+
+Expression parseAtom :
+{
+  Expression expression;
+}
+  (
+    parseLiteral {expression = (Expression) lastConsumedToken;}
+    | 
+    expression=parseCastExpression
+    |
+    expression=parseExpressionList
+    | 
+    expression=parseTuple 
+    | 
+    expression = parseCaseExpression 
+    |
+    expression = parseOnlyName 
+    |
+    expression = parseMaybeBangMaybeFunctionCall
+  )
+  {
+    return expression;
+  }
+;
+
+Expression parseCaseExpression#void :
+{
+  Expression expression, expression2;
+  List < Expression > expressions = new ArrayList <> ();
+  boolean match = false;
+}
+  < CASE >
+  (
+    expression = parseExpression
+    {
+      match = true;
+      expressions.add(expression);
+    }
+  )?
+  (
+    < WHEN > expression = parseExpression < THEN > expression2 = parseExpression
+    {
+      expressions.add(expression);
+      expressions.add(expression2);
+    }
+  )*
+  (
+    < ELSE > expression = parseExpression
+    {
+      expressions.add(expression);
+    }
+  )?
+  < END >
+  {
+    if (match)
+    {
+      return new CallExpressionR(
+      "_CaseMatch", CallExpression.Type.TERM_CASE, expressions);
+    }
+    else
+    {
+      return new CallExpressionR(
+      "_CaseTest", CallExpression.Type.TERM_CASE, expressions);
+    }
+  }
+;
