@@ -74,8 +74,6 @@ import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseName;
 import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseStatement;
 import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
 import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
-import org.eclipse.daanse.mdx.model.record.expression.SymbolLiteralR;
-import org.eclipse.daanse.mdx.model.record.select.SelectQueryAxesClauseR;
 {
 	public static String stripQuotes(String s, String prefix, String suffix, String quoted) {
 		if (!(s.startsWith(prefix) && s.endsWith(suffix))) {
@@ -415,23 +413,24 @@ parseSelectQueryAsteriskClause#SelectQueryAsteriskClause :
 ;
 
 
-SelectQueryAxesClause parseSelectQueryAxesClause :
+INJECT ASTSelectQueryAxesClause :
+   import java.util.List;
+   import org.eclipse.daanse.mdx.model.api.select.SelectQueryAxisClause;
+   implements org.eclipse.daanse.mdx.model.api.select.SelectQueryAxesClause
 {
-  List < SelectQueryAxisClause > selectQueryAxisClauses = new LinkedList<>();
-  SelectQueryAxisClause selectQueryAxisClause;
-}
-  selectQueryAxisClause = parseSelectQueryAxisClause
-  {
-    selectQueryAxisClauses.add(selectQueryAxisClause);
-  }
+   public List<SelectQueryAxisClause> selectQueryAxisClauses() {
+      return childrenOfType(SelectQueryAxisClause.class);
+   }
+}   
+
+SelectQueryAxesClause parseSelectQueryAxesClause#SelectQueryAxesClause :
+  parseSelectQueryAxisClause
   (
-    < COMMA > selectQueryAxisClause = parseSelectQueryAxisClause
-    {
-      selectQueryAxisClauses.add(selectQueryAxisClause);
-    }
+    < COMMA > 
+    parseSelectQueryAxisClause
   )*
   {
-    return new SelectQueryAxesClauseR(selectQueryAxisClauses);
+    return CURRENT_NODE;
   }
 ;
 
@@ -662,12 +661,14 @@ ObjectIdentifier parseIdentifier#void :
 ;
 
 INJECT ASTNameObjectIdentifier :
-  implements org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
+  implements org.eclipse.daanse.mdx.model.api.expression.SymbolLiteral,
+             org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier
 {
   @Property Quoting quoting = Quoting.UNQUOTED;
   @Property String name;
   public Quoting quoting() {return getQuoting();}
   public String name() {return getName();}
+  public String value() {return getName();}
 }
 
 NameObjectIdentifier parseNameObjectIdentifier#NameObjectIdentifier :
@@ -1094,24 +1095,42 @@ parseLiteral#void :
   <NULL>
 ;
 
-Expression parseCastExpression#void :
+INJECT ASTCastExpression :
+   import java.util.List;
+   import org.eclipse.daanse.mdx.model.api.expression.Expression;
+   import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
+   import org.eclipse.daanse.mdx.model.api.expression.CallExpression.Type;
+   implements org.eclipse.daanse.mdx.model.api.expression.CallExpression
+{
+    @Property Expression expression;
+
+    public String name() {
+      return "CAST";
+    }
+
+    public Type type() {
+      return Type.CAST;
+    }
+
+    public List<Expression> expressions() {
+      NameObjectIdentifier noi = firstChildOfType(NameObjectIdentifier.class);
+      return List.of(getExpression(), noi);
+    }
+}
+
+Expression parseCastExpression#CastExpression :
 {
   Expression expression;
-  NameObjectIdentifier nameObjectIdentifier;
 }
   <CAST>
   <LPAREN>
   expression = parseUnaliasedExpression
+  {CURRENT_NODE.setExpression(expression);}
   <AS>
-  nameObjectIdentifier = parseNameObjectIdentifier 
+  parseNameObjectIdentifier 
   <RPAREN>
   {
-    return new CallExpressionR(
-      "CAST", CallExpression.Type.CAST, List.of(
-      expression,
-      new SymbolLiteralR(nameObjectIdentifier.name())
-     )
-    );
+    return CURRENT_NODE;
   }
 ;
 
@@ -1139,7 +1158,7 @@ Expression parseTuple#void :
     {
       expressions = Collections.emptyList();
     }
-  |
+    |
     expressions = expList
   )
   < RBRACE >
