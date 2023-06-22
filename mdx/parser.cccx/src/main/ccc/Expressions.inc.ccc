@@ -17,11 +17,7 @@
 
 INJECT PARSER_CLASS :
   import org.eclipse.daanse.mdx.model.api.expression.CallExpression;
-  import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
   import org.eclipse.daanse.mdx.model.api.expression.Expression;
-  import org.eclipse.daanse.mdx.model.api.expression.FormulaExpression;
-  import org.eclipse.daanse.mdx.model.api.expression.KeyObjectIdentifier;
-  import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
   import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier;
   import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
   import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
@@ -90,7 +86,7 @@ Expression parseExpression :
     < AS > 
     objectIdentifier = parseIdentifier
     {
-      CompoundId compoundId = new CompoundIdR(List.of(objectIdentifier));
+      CompoundIdR compoundId = new CompoundIdR(List.of(objectIdentifier));
       expression = new CallExpressionR("AS", CallExpression.Type.TERM_INFIX, List.of(
       expression, compoundId
       )
@@ -190,7 +186,7 @@ ObjectIdentifier parseIdentifier#void :
   }
 ;
 
-INJECT ASTNameObjectIdentifier :
+INJECT NameObjectIdentifier :
   implements org.eclipse.daanse.mdx.model.api.expression.SymbolLiteral,
              org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier
 {
@@ -220,7 +216,7 @@ NameObjectIdentifier parseNameObjectIdentifier#NameObjectIdentifier :
 ;
 
 
-INJECT ASTKeyObjectIdentifier :
+INJECT KeyObjectIdentifier :
    import java.util.List;
    import java.util.ArrayList;
    import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
@@ -274,7 +270,7 @@ String parseKeyword :
   }
 ;
 
-INJECT ASTCompoundId :
+INJECT CompoundId :
   import java.util.List;
   import java.util.ArrayList;
   import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier;
@@ -573,7 +569,7 @@ Expression parseFactor :
   }
 ;
 
-INJECT ASTPrimaryExpression : implements org.eclipse.daanse.mdx.model.api.expression.Expression
+INJECT PrimaryExpression : implements org.eclipse.daanse.mdx.model.api.expression.Expression
 
 Expression parsePrimary#PrimaryExpression :
 {
@@ -621,10 +617,9 @@ parseLiteral#void :
   <NULL>
 ;
 
-INJECT ASTCastExpression :
+INJECT CastExpression :
    import java.util.List;
    import org.eclipse.daanse.mdx.model.api.expression.Expression;
-   import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
    import org.eclipse.daanse.mdx.model.api.expression.CallExpression.Type;
    implements org.eclipse.daanse.mdx.model.api.expression.CallExpression
 {
@@ -801,7 +796,7 @@ Expression parseCaseExpression#void :
   }
 ;
 
-INJECT ASTFormulaExpression : implements org.eclipse.daanse.mdx.model.api.expression.FormulaExpression;
+INJECT FormulaExpression : implements org.eclipse.daanse.mdx.model.api.expression.FormulaExpression;
 
 FormulaExpression parseFormulaExpression#FormulaExpression :
   parseIdentifier < EQ > parseIdentifier
@@ -810,7 +805,7 @@ FormulaExpression parseFormulaExpression#FormulaExpression :
   }
 ;
 
-INJECT ASTMemberPropertyDefinition :
+INJECT MemberPropertyDefinition :
   import org.eclipse.daanse.mdx.model.api.expression.Expression;
   import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier;
   implements org.eclipse.daanse.mdx.model.api.select.MemberPropertyDefinition
@@ -830,40 +825,6 @@ MemberPropertyDefinition parseMemberPropertyDefinition#MemberPropertyDefinition 
   parseExpression
   {
      return CURRENT_NODE;
-  }
-;
-
-INJECT ASTCreateMemberBodyClause :
-  import java.util.List;
-  import java.util.ArrayList;
-  import org.eclipse.daanse.mdx.model.api.expression.Expression;
-  import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
-  import org.eclipse.daanse.mdx.model.api.select.MemberPropertyDefinition;
-  implements org.eclipse.daanse.mdx.model.api.select.CreateMemberBodyClause
-{
-  public CompoundId compoundId() {
-    return (CompoundId) getChild(0);
-  }
-
-  public Expression expression() {
-     return (Expression) getChild(2);
-  }
-
-  public List<MemberPropertyDefinition> memberPropertyDefinitions() {
-     return childrenOfType(MemberPropertyDefinition.class);
-  }
-}  
-
-// https://learn.microsoft.com/en-us/sql/mdx/mdx-data-definition-create-member?view=sql-server-ver16
-CreateMemberBodyClause parseCreateMemberBodyClause#CreateMemberBodyClause :
-  parseCompoundId 
-  < AS > 
-  parseExpression
-    (
-     < COMMA > parseMemberPropertyDefinition
-    )*
-  {
-    return CURRENT_NODE;
   }
 ;
 

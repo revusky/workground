@@ -421,7 +421,7 @@ TOKEN #StringLiteral :
   >
 ;
 
-INJECT ASTStringLiteral :
+INJECT StringLiteral :
    import static PARSER_PACKAGE.PARSER_CLASS.stripQuotes;
    implements org.eclipse.daanse.mdx.model.api.expression.StringLiteral 
 {
@@ -439,7 +439,7 @@ INJECT ASTStringLiteral :
    }
 }
 
-INJECT ASTNumericLiteral : 
+INJECT NumericLiteral : 
   import java.math.BigDecimal;
   implements org.eclipse.daanse.mdx.model.api.expression.NumericLiteral
 {
@@ -448,4 +448,4 @@ INJECT ASTNumericLiteral :
    }
 }
 
-INJECT ASTNullLiteral : implements org.eclipse.daanse.mdx.model.api.expression.NullLiteral;
+INJECT NullLiteral : implements org.eclipse.daanse.mdx.model.api.expression.NullLiteral;

@@ -16,28 +16,10 @@
 // into an INCLUDE
 
 INJECT PARSER_CLASS :
-  import org.eclipse.daanse.mdx.model.api.DrillthroughStatement;
-  import org.eclipse.daanse.mdx.model.api.ExplainStatement;
   import org.eclipse.daanse.mdx.model.api.MdxStatement;
-  import org.eclipse.daanse.mdx.model.api.SelectStatement;
-  import org.eclipse.daanse.mdx.model.api.RefreshStatement;
-  import org.eclipse.daanse.mdx.model.api.DMVStatement;
   import org.eclipse.daanse.mdx.model.api.select.Axis;
-  import org.eclipse.daanse.mdx.model.api.select.CreateCellCalculationBodyClause;
-  import org.eclipse.daanse.mdx.model.api.select.CreateMemberBodyClause;
-  import org.eclipse.daanse.mdx.model.api.select.CreateSetBodyClause;
-  import org.eclipse.daanse.mdx.model.api.select.MemberPropertyDefinition;
-  import org.eclipse.daanse.mdx.model.api.select.SelectCellPropertyListClause;
-  import org.eclipse.daanse.mdx.model.api.select.SelectDimensionPropertyListClause;
-  import org.eclipse.daanse.mdx.model.api.select.SelectQueryAsteriskClause;
-  import org.eclipse.daanse.mdx.model.api.select.SelectQueryAxesClause;
-  import org.eclipse.daanse.mdx.model.api.select.SelectQueryAxisClause;
   import org.eclipse.daanse.mdx.model.api.select.SelectQueryClause;
-  import org.eclipse.daanse.mdx.model.api.select.SelectSlicerAxisClause;
   import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClause;
-  import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseName;
-  import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseStatement;
-  import org.eclipse.daanse.mdx.model.api.ReturnItem;
 
 // ----------------------------------------------------------------------------
 // MDX Statement
@@ -78,7 +60,7 @@ MdxStatement parseMdxStatement#Root :
   }
 ;
 
-INJECT ASTDrillthroughStatement :
+INJECT DrillthroughStatement :
    import java.util.List;
    import java.util.Optional;
    import org.eclipse.daanse.mdx.model.api.ReturnItem;
@@ -128,7 +110,7 @@ DrillthroughStatement parseDrillthroughStatement#DrillthroughStatement :
   }
 ;
 
-INJECT ASTExplainStatement :
+INJECT ExplainStatement :
    import org.eclipse.daanse.mdx.model.api.MdxStatement;
    implements org.eclipse.daanse.mdx.model.api.ExplainStatement
 {
@@ -149,7 +131,7 @@ ExplainStatement parseExplainStatement#ExplainStatement :
   }
 ;
 
-INJECT ASTSelectDimensionPropertyListClause :
+INJECT SelectDimensionPropertyListClause :
    import java.util.List;
    import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
    implements org.eclipse.daanse.mdx.model.api.select.SelectDimensionPropertyListClause
@@ -169,7 +151,7 @@ parseSelectDimensionPropertyListClause#SelectDimensionPropertyListClause :
   )*
 ;
 
-INJECT ASTRefreshStatement :
+INJECT RefreshStatement :
    import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
    implements org.eclipse.daanse.mdx.model.api.RefreshStatement;
 {
@@ -187,7 +169,7 @@ RefreshStatement parseRefreshStatement#RefreshStatement :
   }
 ;
 
-INJECT ASTDMVStatement :
+INJECT DMVStatement :
    import java.util.List;
    import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
    import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
@@ -229,7 +211,7 @@ DMVStatement parseDMVStatement#DMVStatement :
   }
 ;
 
-INJECT ASTSelectQueryAxisClause :
+INJECT SelectQueryAxisClause :
    import org.eclipse.daanse.mdx.model.api.expression.Expression;
    import org.eclipse.daanse.mdx.model.api.select.Axis;
    import org.eclipse.daanse.mdx.model.api.select.SelectDimensionPropertyListClause;
@@ -289,7 +271,7 @@ SelectQueryAxisClause parseSelectQueryAxisClause#SelectQueryAxisClause :
   }
 ;
 
-INJECT ASTCreateSetBodyClause :
+INJECT CreateSetBodyClause :
   import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
   import org.eclipse.daanse.mdx.model.api.expression.Expression;
   implements org.eclipse.daanse.mdx.model.api.select.CreateSetBodyClause
@@ -310,7 +292,7 @@ CreateSetBodyClause parseCreateSetBodyClause#CreateSetBodyClause :
   }
 ;
 
-INJECT ASTSelectCellPropertyListClause :
+INJECT SelectCellPropertyListClause :
    import java.util.List;
    import java.util.ArrayList;
    import java.util.stream.Collectors;
@@ -337,7 +319,7 @@ SelectCellPropertyListClause parseSelectCellPropertyListClause#SelectCellPropert
   }
 ;
 
-INJECT ASTSelectSlicerAxisClause :
+INJECT SelectSlicerAxisClause :
    import org.eclipse.daanse.mdx.model.api.expression.Expression;
    implements org.eclipse.daanse.mdx.model.api.select.SelectSlicerAxisClause;
 {
@@ -352,7 +334,7 @@ parseSelectSlicerAxisClause#SelectSlicerAxisClause :
 ;
 
 
-INJECT ASTSelectQueryAxesClause :
+INJECT SelectQueryAxesClause :
    import java.util.List;
    import org.eclipse.daanse.mdx.model.api.select.SelectQueryAxisClause;
    implements org.eclipse.daanse.mdx.model.api.select.SelectQueryAxesClause
@@ -374,7 +356,7 @@ SelectQueryAxesClause parseSelectQueryAxesClause#SelectQueryAxesClause :
 ;
 
 
-INJECT ASTSelectSubcubeClauseStatement :
+INJECT SelectSubcubeClauseStatement :
   import java.util.Optional;
   import org.eclipse.daanse.mdx.model.api.select.SelectQueryClause;
   import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClause;
@@ -410,13 +392,13 @@ parseSelectSubcubeClauseStatement#SelectSubcubeClauseStatement :
   < RPAREN >
 ;
 
-INJECT ASTSelectQueryAsteriskClause : implements org.eclipse.daanse.mdx.model.api.select.SelectQueryAsteriskClause;
+INJECT SelectQueryAsteriskClause : implements org.eclipse.daanse.mdx.model.api.select.SelectQueryAsteriskClause;
 
 parseSelectQueryAsteriskClause#SelectQueryAsteriskClause :
   < ASTERISK >
 ;
 
-INJECT ASTSelectStatement :
+INJECT SelectStatement :
    import java.util.List;
    import java.util.Optional;
    import org.eclipse.daanse.mdx.model.api.select.SelectWithClause;
@@ -479,7 +461,7 @@ parseSelectSubcubeClause#void :
 ;
 
 
-INJECT ASTSelectSubcubeClauseName :
+INJECT SelectSubcubeClauseName :
    import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
    implements org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseName
 {
@@ -495,7 +477,7 @@ SelectSubcubeClauseName parseSelectSubcubeClauseName#SelectSubcubeClauseName :
   }
 ;
 
-INJECT ASTMeasureBodyClause : implements org.eclipse.daanse.mdx.model.api.select.MeasureBodyClause;
+INJECT MeasureBodyClause : implements org.eclipse.daanse.mdx.model.api.select.MeasureBodyClause;
 
 // https://learn.microsoft.com/en-us/analysis-services/multidimensional-models/mdx/mdx-building-measures?view=asallproducts-allversions
 parseMeasureBodyClause#MeasureBodyClause:
@@ -512,7 +494,7 @@ parseSelectWithClause#void :
   )
 ;
 
-INJECT ASTReturnItem :
+INJECT ReturnItem :
   import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
   implements org.eclipse.daanse.mdx.model.api.ReturnItem
 {
@@ -523,7 +505,7 @@ INJECT ASTReturnItem :
 
 parseReturnItem#ReturnItem : parseCompoundId ;
 
-INJECT ASTCreateCellCalculationBodyClause : implements org.eclipse.daanse.mdx.model.api.select.CreateCellCalculationBodyClause;
+INJECT CreateCellCalculationBodyClause : implements org.eclipse.daanse.mdx.model.api.select.CreateCellCalculationBodyClause;
 
 //https://learn.microsoft.com/en-us/sql/mdx/mdx-data-definition-create-cell-calculation?view=sql-server-ver16
 parseCreateCellCalculationBodyClause#CreateCellCalculationBodyClause:
@@ -541,3 +523,38 @@ List<ReturnItem> parseReturnItems#ReturnItems :
     return result;
    }
 ;
+
+INJECT CreateMemberBodyClause :
+  import java.util.List;
+  import java.util.ArrayList;
+  import org.eclipse.daanse.mdx.model.api.expression.Expression;
+  import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
+  import org.eclipse.daanse.mdx.model.api.select.MemberPropertyDefinition;
+  implements org.eclipse.daanse.mdx.model.api.select.CreateMemberBodyClause
+{
+  public CompoundId compoundId() {
+    return (CompoundId) getChild(0);
+  }
+
+  public Expression expression() {
+     return (Expression) getChild(2);
+  }
+
+  public List<MemberPropertyDefinition> memberPropertyDefinitions() {
+     return childrenOfType(MemberPropertyDefinition.class);
+  }
+}  
+
+// https://learn.microsoft.com/en-us/sql/mdx/mdx-data-definition-create-member?view=sql-server-ver16
+CreateMemberBodyClause parseCreateMemberBodyClause#CreateMemberBodyClause :
+  parseCompoundId 
+  < AS > 
+  parseExpression
+    (
+     < COMMA > parseMemberPropertyDefinition
+    )*
+  {
+    return CURRENT_NODE;
+  }
+;
+
