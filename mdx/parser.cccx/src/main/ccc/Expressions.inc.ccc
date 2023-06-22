@@ -179,7 +179,7 @@ ObjectIdentifier parseIdentifier#void :
   (
     objectIdentifier = NameObjectIdentifier
     |
-    objectIdentifier = parseKeyIdentifier
+    objectIdentifier = KeyObjectIdentifier
   )
   {
     return objectIdentifier;
@@ -232,15 +232,12 @@ INJECT KeyObjectIdentifier :
 }
 
 // for example '&foo&[1]&bar' in '[x].&foo&[1]&bar.[y]'
-KeyObjectIdentifier parseKeyIdentifier#KeyObjectIdentifier :
-  ( parseAmpId )+
-  {
-    return CURRENT_NODE;
-  }
+KeyObjectIdentifier# :
+  ( AmpId )+
 ;
 
 
-NameObjectIdentifier parseAmpId#NameObjectIdentifier :
+AmpId#NameObjectIdentifier :
  (
   < AMP_QUOTED_ID >
   {
@@ -254,15 +251,13 @@ NameObjectIdentifier parseAmpId#NameObjectIdentifier :
     CURRENT_NODE.setName(getTokenImage(0).substring(1));
   }
  )
- {return CURRENT_NODE;}
 ;
 
 
 // a keyword that is not a RESERVED_WORD could be used as identifier
 String parseKeyword :
   (
-    < DIMENSION >
-  | < PROPERTIES >
+    < DIMENSION > | < PROPERTIES >
   )
   {
     return getTokenImage(0);
