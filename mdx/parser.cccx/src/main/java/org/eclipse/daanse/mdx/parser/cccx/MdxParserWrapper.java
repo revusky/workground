@@ -204,7 +204,7 @@ public class MdxParserWrapper implements org.eclipse.daanse.mdx.parser.api.MdxPa
         }
     }
 
-    public List<ReturnItem> parseReturnItems() throws MdxParserException {
+    public List<? extends ReturnItem> parseReturnItems() throws MdxParserException {
         try {
             return delegate.parseReturnItems();
 
