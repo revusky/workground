@@ -322,7 +322,7 @@ SKIP :
  * Separators
  */
 < DEFAULT >
-TOKEN :
+TOKEN #Separator :
   < LPAREN : "(" >
 | < RPAREN : ")" >
 | < LBRACE : "{" >
@@ -334,12 +334,11 @@ TOKEN :
 | < DOT : "." >
 ;
 
-
 /*
  * Operators
  */
 < DEFAULT >
-TOKEN :
+TOKEN #Operator :
   < ASTERISK : "*" >
 | < BANG : "!" >
 | < COLON : ":" >

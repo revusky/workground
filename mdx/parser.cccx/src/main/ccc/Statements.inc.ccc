@@ -47,11 +47,11 @@ INJECT PARSER_CLASS :
 //
 MdxStatement parseMdxStatement#Root :
   (
-    parseSelectStatement
+    SelectStatement
   	|
-  	parseDrillthroughStatement
+  	DrillthroughStatement
     |
-    parseExplainStatement
+    ExplainStatement
   )
   {MdxStatement result = (MdxStatement) peekNode();} 
   < EOF >
@@ -88,7 +88,7 @@ INJECT DrillthroughStatement :
    }
 }   
 
-DrillthroughStatement parseDrillthroughStatement#DrillthroughStatement :
+DrillthroughStatement :
   < DRILLTHROUGH >
   (
     < MAXROWS > < UNSIGNED_INTEGER_LITERAL >
@@ -96,7 +96,7 @@ DrillthroughStatement parseDrillthroughStatement#DrillthroughStatement :
   (
     < FIRSTROWSET > < UNSIGNED_INTEGER_LITERAL >
   )?
-  parseSelectStatement
+  SelectStatement
   (
     < RETURN >
     parseReturnItem 
@@ -105,9 +105,6 @@ DrillthroughStatement parseDrillthroughStatement#DrillthroughStatement :
       parseReturnItem 
     )*
   )?
-  {
-    return CURRENT_NODE;
-  }
 ;
 
 INJECT ExplainStatement :
@@ -119,16 +116,13 @@ INJECT ExplainStatement :
     }
 }
 
-ExplainStatement parseExplainStatement#ExplainStatement :
+ExplainStatement :
   < EXPLAIN > < PLAN> < FOR >
   (
-    parseSelectStatement
+    SelectStatement
     |
-    parseDrillthroughStatement
+    DrillthroughStatement
   )
-  {
-    return CURRENT_NODE;
-  }
 ;
 
 INJECT SelectDimensionPropertyListClause :
@@ -237,7 +231,7 @@ INJECT SelectQueryAxisClause :
 }
 
 // <SelectQueryAxisClause> ::= [NON EMPTY] <set> [<dimProps>] ON <axis_name>
-SelectQueryAxisClause parseSelectQueryAxisClause#SelectQueryAxisClause :
+SelectQueryAxisClause :
   (< NON > < EMPTY >) ?
   parseExpression
   (
@@ -266,9 +260,6 @@ SelectQueryAxisClause parseSelectQueryAxisClause#SelectQueryAxisClause :
       < CHAPTERS >
     )
   )
-  {
-    return CURRENT_NODE;
-  }
 ;
 
 INJECT CreateSetBodyClause :
@@ -345,10 +336,10 @@ INJECT SelectQueryAxesClause :
 }   
 
 SelectQueryAxesClause parseSelectQueryAxesClause#SelectQueryAxesClause :
-  parseSelectQueryAxisClause
+  SelectQueryAxisClause
   (
     < COMMA > 
-    parseSelectQueryAxisClause
+    SelectQueryAxisClause
   )*
   {
     return CURRENT_NODE;
@@ -376,7 +367,7 @@ INJECT SelectSubcubeClauseStatement :
     }
 }  
 
-parseSelectSubcubeClauseStatement#SelectSubcubeClauseStatement :
+SelectSubcubeClauseStatement :
   < LPAREN > 
   < SELECT >
   (
@@ -430,7 +421,7 @@ INJECT SelectStatement :
 }
 
 //https://learn.microsoft.com/en-us/sql/mdx/mdx-data-manipulation-select?view=sql-server-ver16
-SelectStatement parseSelectStatement#SelectStatement :
+SelectStatement SelectStatement :
   (
     < WITH > (parseSelectWithClause)+
   )?
@@ -457,7 +448,7 @@ SelectStatement parseSelectStatement#SelectStatement :
 parseSelectSubcubeClause#void :
   parseSelectSubcubeClauseName
   |
-  parseSelectSubcubeClauseStatement
+  SelectSubcubeClauseStatement
 ;
 
 

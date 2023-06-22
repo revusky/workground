@@ -5,9 +5,10 @@
    </target>
 
    <target name="init">
-	  <uptodate property="parser.uptodate"
-      srcfile="src/main/ccc/Grammer.ccc"
-		targetfile="src/gen/java/org/eclipse/daanse/mdx/parser/cccx/MdxParser.java"/>
+    <uptodate property="parser.uptodate" 
+                targetfile="src/gen/java/org/eclipse/daanse/mdx/parser/cccx/MdxParser.java">
+      <srcfiles dir="src/main/ccc" includes="*.ccc" />
+    </uptodate>
    </target>
 
    <target name="parser-gen" depends="init" unless="parser.uptodate">
