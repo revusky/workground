@@ -177,7 +177,7 @@ ObjectIdentifier parseIdentifier#void :
   ObjectIdentifier objectIdentifier;
 }
   (
-    objectIdentifier = parseNameObjectIdentifier
+    objectIdentifier = NameObjectIdentifier
     |
     objectIdentifier = parseKeyIdentifier
   )
@@ -197,7 +197,7 @@ INJECT NameObjectIdentifier :
   public String value() {return getName();}
 }
 
-NameObjectIdentifier parseNameObjectIdentifier#NameObjectIdentifier :
+NameObjectIdentifier# :
  (
   parseKeyword {CURRENT_NODE.setName(getTokenImage(0));}
   |
@@ -212,7 +212,6 @@ NameObjectIdentifier parseNameObjectIdentifier#NameObjectIdentifier :
     CURRENT_NODE.setQuoting(ObjectIdentifier.Quoting.QUOTED);
   }
  )
- {return CURRENT_NODE;}
 ;
 
 
@@ -648,7 +647,7 @@ Expression parseCastExpression#CastExpression :
   expression = parseUnaliasedExpression
   {CURRENT_NODE.setExpression(expression);}
   <AS>
-  parseNameObjectIdentifier 
+  NameObjectIdentifier 
   <RPAREN>
   {
     return CURRENT_NODE;
@@ -689,7 +688,7 @@ Expression parseTuple#void :
 ;
 
 Expression parseOnlyName#void :
-   parseNameObjectIdentifier ASSERT ~(<BANG>|<LPAREN>) =>||
+   NameObjectIdentifier ASSERT ~(<BANG>|<LPAREN>) =>||
    {
       return (Expression) peekNode();
    }
@@ -703,9 +702,10 @@ Expression parseMaybeBangMaybeFunctionCall#void :
   NameObjectIdentifier nameObjectIdentifier;
   List < Expression > expressions = null;
 }
-  nameObjectIdentifier = parseNameObjectIdentifier
+  nameObjectIdentifier = NameObjectIdentifier
   (
-    < BANG > nameObjectIdentifier = parseNameObjectIdentifier
+    < BANG > 
+    nameObjectIdentifier = NameObjectIdentifier
     {
     // We support the syntax for qualifying function names with package
     // names separated by bang ('!'), e.g. 'whiz!bang!foo(a, b)'
@@ -819,12 +819,9 @@ INJECT MemberPropertyDefinition :
    }
 }
 
-MemberPropertyDefinition parseMemberPropertyDefinition#MemberPropertyDefinition :
+MemberPropertyDefinition :
   parseIdentifier 
   < EQ > 
   parseExpression
-  {
-     return CURRENT_NODE;
-  }
 ;
 

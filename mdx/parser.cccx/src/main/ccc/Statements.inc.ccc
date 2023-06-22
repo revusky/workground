@@ -135,7 +135,7 @@ INJECT SelectDimensionPropertyListClause :
   }
 }
 
-parseSelectDimensionPropertyListClause#SelectDimensionPropertyListClause :
+SelectDimensionPropertyListClause :
   (< DIMENSION >)?
   < PROPERTIES >
   CompoundId
@@ -154,13 +154,10 @@ INJECT RefreshStatement :
    }
 }
 
-RefreshStatement parseRefreshStatement#RefreshStatement :
+RefreshStatement :
   < REFRESH > 
   < CUBE >  
-  parseNameObjectIdentifier
-  {
-     return CURRENT_NODE;
-  }
+  NameObjectIdentifier
 ;
 
 INJECT DMVStatement :
@@ -185,7 +182,7 @@ INJECT DMVStatement :
     }
 }
 
-DMVStatement parseDMVStatement#DMVStatement :
+#DMVStatement :
   < SELECT >
   (
     CompoundId
@@ -196,7 +193,7 @@ DMVStatement parseDMVStatement#DMVStatement :
   < FROM > 
   < SYSTEM_CUBE >
   < DOT > 
-  parseNameObjectIdentifier
+  NameObjectIdentifier
   (
      < WHERE > parseExpression()
   )?
@@ -235,7 +232,7 @@ SelectQueryAxisClause :
   (< NON > < EMPTY >) ?
   parseExpression
   (
-    parseSelectDimensionPropertyListClause
+    SelectDimensionPropertyListClause
   )?
   < ON >
   (
@@ -316,7 +313,7 @@ INJECT SelectSlicerAxisClause :
     }
 }
 
-parseSelectSlicerAxisClause#SelectSlicerAxisClause :
+SelectSlicerAxisClause :
   < WHERE > 
   parseExpression
 ;
@@ -332,15 +329,12 @@ INJECT SelectQueryAxesClause :
    }
 }   
 
-SelectQueryAxesClause parseSelectQueryAxesClause#SelectQueryAxesClause :
+SelectQueryAxesClause# :
   SelectQueryAxisClause
   (
     < COMMA > 
     SelectQueryAxisClause
   )*
-  {
-    return CURRENT_NODE;
-  }
 ;
 
 
@@ -368,21 +362,21 @@ SelectSubcubeClauseStatement :
   < LPAREN > 
   < SELECT >
   (
-    parseSelectQueryAsteriskClause
+    SelectQueryAsteriskClause
     |
-    parseSelectQueryAxesClause
+    SelectQueryAxesClause
   )?
   < FROM > 
   SelectSubcubeClause
   (
-    parseSelectSlicerAxisClause
+    SelectSlicerAxisClause
   )?
   < RPAREN >
 ;
 
 INJECT SelectQueryAsteriskClause : implements org.eclipse.daanse.mdx.model.api.select.SelectQueryAsteriskClause;
 
-parseSelectQueryAsteriskClause#SelectQueryAsteriskClause :
+SelectQueryAsteriskClause# :
   < ASTERISK >
 ;
 
@@ -420,18 +414,18 @@ INJECT SelectStatement :
 //https://learn.microsoft.com/en-us/sql/mdx/mdx-data-manipulation-select?view=sql-server-ver16
 SelectStatement SelectStatement :
   (
-    < WITH > (parseSelectWithClause)+
+    < WITH > (SelectWithClause)+
   )?
   < SELECT >
   (
-    parseSelectQueryAsteriskClause
+    SelectQueryAsteriskClause
     |
-    parseSelectQueryAxesClause
+    SelectQueryAxesClause
   )?
   < FROM > 
   SelectSubcubeClause
   (
-    parseSelectSlicerAxisClause
+    SelectSlicerAxisClause
   )?
   (
     SelectCellPropertyListClause
@@ -459,7 +453,7 @@ INJECT SelectSubcubeClauseName :
 }   
 
 SelectSubcubeClauseName SelectSubcubeClauseName# :
-  parseNameObjectIdentifier
+  NameObjectIdentifier
   {
     return CURRENT_NODE;
   }
@@ -468,18 +462,20 @@ SelectSubcubeClauseName SelectSubcubeClauseName# :
 INJECT MeasureBodyClause : implements org.eclipse.daanse.mdx.model.api.select.MeasureBodyClause;
 
 // https://learn.microsoft.com/en-us/analysis-services/multidimensional-models/mdx/mdx-building-measures?view=asallproducts-allversions
-parseMeasureBodyClause#MeasureBodyClause:
+MeasureBodyClause :
   <NOT><NOT><NOT><NOT><NOT><NOT><NOT>
 ;
 
 
 // https://docs.oracle.com/cd/E57185_01/ESBTR/mdx_grammar_rules.html
-parseSelectWithClause#void :
-  ( <CELL> <CALCULATION> parseCreateCellCalculationBodyClause
-  | ("CALCULATED")? < MEMBER > parseCreateMemberBodyClause
-  | < SET > CreateSetBodyClause
-  | <MEASURE>  parseMeasureBodyClause
-  )
+SelectWithClause#void :
+  <CELL> <CALCULATION> CreateCellCalculationBodyClause
+  | 
+  ("CALCULATED")? < MEMBER > CreateMemberBodyClause
+  | 
+  < SET > CreateSetBodyClause
+  | 
+  <MEASURE> MeasureBodyClause
 ;
 
 INJECT ReturnItem :
@@ -496,7 +492,7 @@ ReturnItem# : CompoundId ;
 INJECT CreateCellCalculationBodyClause : implements org.eclipse.daanse.mdx.model.api.select.CreateCellCalculationBodyClause;
 
 //https://learn.microsoft.com/en-us/sql/mdx/mdx-data-definition-create-cell-calculation?view=sql-server-ver16
-parseCreateCellCalculationBodyClause#CreateCellCalculationBodyClause:
+CreateCellCalculationBodyClause :
  <NOT><NOT><NOT><NOT><NOT><NOT><NOT>
 ;
 
@@ -534,15 +530,12 @@ INJECT CreateMemberBodyClause :
 }  
 
 // https://learn.microsoft.com/en-us/sql/mdx/mdx-data-definition-create-member?view=sql-server-ver16
-CreateMemberBodyClause parseCreateMemberBodyClause#CreateMemberBodyClause :
+CreateMemberBodyClause :
   CompoundId 
   < AS > 
   parseExpression
     (
-     < COMMA > parseMemberPropertyDefinition
+     < COMMA > MemberPropertyDefinition
     )*
-  {
-    return CURRENT_NODE;
-  }
 ;
 
