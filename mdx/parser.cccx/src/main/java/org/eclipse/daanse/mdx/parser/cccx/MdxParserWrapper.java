@@ -80,7 +80,7 @@ public class MdxParserWrapper implements org.eclipse.daanse.mdx.parser.api.MdxPa
     public SelectQueryAsteriskClause parseSelectQueryAsteriskClause() throws MdxParserException {
         try {
             //return delegate.parseSelectQueryAsteriskClause();
-            delegate.parseSelectCellPropertyListClause();
+            delegate.SelectCellPropertyListClause();
             return (SelectQueryAsteriskClause) delegate.peekNode();
         } catch (Exception e) {
             throw new MdxParserException(e);
@@ -129,7 +129,7 @@ public class MdxParserWrapper implements org.eclipse.daanse.mdx.parser.api.MdxPa
     @Override
     public SelectSubcubeClause parseSelectSubcubeClause() throws MdxParserException {
         try {
-            delegate.parseSelectSubcubeClause();
+            delegate.SelectSubcubeClause();
             return (SelectSubcubeClause) delegate.peekNode();
         } catch (Exception e) {
             throw new MdxParserException(e);
@@ -152,7 +152,7 @@ public class MdxParserWrapper implements org.eclipse.daanse.mdx.parser.api.MdxPa
     public SelectQueryAxisClause parseSelectQueryAxisClause() throws MdxParserException {
         try {
             delegate.SelectQueryAxisClause();
-            return (SelectQueryAxisClause) peekNode();
+            return (SelectQueryAxisClause) delegate.peekNode();
         } catch (Exception e) {
             throw new MdxParserException(e);
         } finally {
@@ -173,8 +173,8 @@ public class MdxParserWrapper implements org.eclipse.daanse.mdx.parser.api.MdxPa
 
     public SelectCellPropertyListClause parseSelectCellPropertyListClause() throws MdxParserException {
         try {
-            return delegate.parseSelectCellPropertyListClause();
-
+            delegate.SelectCellPropertyListClause();
+            return (SelectCellPropertyListClause) delegate.peekNode();
         } catch (Exception e) {
             throw new MdxParserException(e);
         } finally {
@@ -196,7 +196,7 @@ public class MdxParserWrapper implements org.eclipse.daanse.mdx.parser.api.MdxPa
     public ExplainStatement parseExplainStatement() throws MdxParserException {
         try {
             delegate.ExplainStatement();
-            return (ExplainStatement) peekNode();
+            return (ExplainStatement) delegate.peekNode();
         } catch (Exception e) {
             throw new MdxParserException(e);
         } finally {
