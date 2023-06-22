@@ -99,10 +99,10 @@ DrillthroughStatement :
   SelectStatement
   (
     < RETURN >
-    parseReturnItem 
+    ReturnItem 
     (
       <COMMA> 
-      parseReturnItem 
+      ReturnItem 
     )*
   )?
 ;
@@ -138,10 +138,10 @@ INJECT SelectDimensionPropertyListClause :
 parseSelectDimensionPropertyListClause#SelectDimensionPropertyListClause :
   (< DIMENSION >)?
   < PROPERTIES >
-  parseCompoundId
+  CompoundId
   (
     < COMMA >
-    parseCompoundId
+    CompoundId
   )*
 ;
 
@@ -188,9 +188,9 @@ INJECT DMVStatement :
 DMVStatement parseDMVStatement#DMVStatement :
   < SELECT >
   (
-    parseCompoundId
+    CompoundId
     (
-        < COMMA > parseCompoundId
+        < COMMA > CompoundId
     )*
   )?
   < FROM > 
@@ -276,11 +276,8 @@ INJECT CreateSetBodyClause :
    }
 }  
 
-CreateSetBodyClause parseCreateSetBodyClause#CreateSetBodyClause :
-  parseCompoundId < AS > parseExpression
-  {
-    return CURRENT_NODE;
-  }
+CreateSetBodyClause :
+  CompoundId < AS > parseExpression
 ;
 
 INJECT SelectCellPropertyListClause :
@@ -298,7 +295,7 @@ INJECT SelectCellPropertyListClause :
    }
 }
 
-SelectCellPropertyListClause parseSelectCellPropertyListClause#SelectCellPropertyListClause :
+SelectCellPropertyListClause SelectCellPropertyListClause# :
   (< CELL >)?
   < PROPERTIES > 
   <ID>
@@ -376,7 +373,7 @@ SelectSubcubeClauseStatement :
     parseSelectQueryAxesClause
   )?
   < FROM > 
-  parseSelectSubcubeClause
+  SelectSubcubeClause
   (
     parseSelectSlicerAxisClause
   )?
@@ -432,12 +429,12 @@ SelectStatement SelectStatement :
     parseSelectQueryAxesClause
   )?
   < FROM > 
-  parseSelectSubcubeClause
+  SelectSubcubeClause
   (
     parseSelectSlicerAxisClause
   )?
   (
-    parseSelectCellPropertyListClause
+    SelectCellPropertyListClause
   )?
   {
      return CURRENT_NODE;
@@ -445,8 +442,8 @@ SelectStatement SelectStatement :
 ;
 
 
-parseSelectSubcubeClause#void :
-  parseSelectSubcubeClauseName
+SelectSubcubeClause#void :
+  SelectSubcubeClauseName
   |
   SelectSubcubeClauseStatement
 ;
@@ -461,7 +458,7 @@ INJECT SelectSubcubeClauseName :
    }
 }   
 
-SelectSubcubeClauseName parseSelectSubcubeClauseName#SelectSubcubeClauseName :
+SelectSubcubeClauseName SelectSubcubeClauseName# :
   parseNameObjectIdentifier
   {
     return CURRENT_NODE;
@@ -480,7 +477,7 @@ parseMeasureBodyClause#MeasureBodyClause:
 parseSelectWithClause#void :
   ( <CELL> <CALCULATION> parseCreateCellCalculationBodyClause
   | ("CALCULATED")? < MEMBER > parseCreateMemberBodyClause
-  | < SET > parseCreateSetBodyClause
+  | < SET > CreateSetBodyClause
   | <MEASURE>  parseMeasureBodyClause
   )
 ;
@@ -494,7 +491,7 @@ INJECT ReturnItem :
    }
 }
 
-parseReturnItem#ReturnItem : parseCompoundId ;
+ReturnItem# : CompoundId ;
 
 INJECT CreateCellCalculationBodyClause : implements org.eclipse.daanse.mdx.model.api.select.CreateCellCalculationBodyClause;
 
@@ -507,9 +504,9 @@ parseCreateCellCalculationBodyClause#CreateCellCalculationBodyClause:
 // so that a pre-existing test still compiles
 List<ReturnItem> parseReturnItems#ReturnItems :
    {List<ReturnItem> result = new ArrayList<>();} 
-   parseReturnItem
+   ReturnItem
    {result.add((ReturnItem) peekNode());}
-   (<COMMA> parseReturnItem {result.add((ReturnItem) peekNode());})*
+   (<COMMA> ReturnItem {result.add((ReturnItem) peekNode());})*
    {
     return result;
    }
@@ -538,7 +535,7 @@ INJECT CreateMemberBodyClause :
 
 // https://learn.microsoft.com/en-us/sql/mdx/mdx-data-definition-create-member?view=sql-server-ver16
 CreateMemberBodyClause parseCreateMemberBodyClause#CreateMemberBodyClause :
-  parseCompoundId 
+  CompoundId 
   < AS > 
   parseExpression
     (

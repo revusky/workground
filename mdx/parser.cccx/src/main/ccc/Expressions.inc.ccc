@@ -281,7 +281,7 @@ INJECT CompoundId :
     }
 }  
 
-parseCompoundId#CompoundId :
+CompoundId# :
   parseIdentifier
   (
     < DOT > parseIdentifier

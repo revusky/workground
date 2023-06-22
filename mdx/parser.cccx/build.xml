@@ -28,7 +28,10 @@
              deprecation="off"
              debug="on"
              classpath="../model.api/target/classes:../model.record/target/classes"
-      />
+      >
+        <src path="src/gen/java"/>        
+        <!--src path="src/main/java"/-->        
+      </javac>
    </target>
 
 </project>
