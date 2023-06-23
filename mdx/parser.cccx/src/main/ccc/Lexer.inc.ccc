@@ -17,6 +17,9 @@ SKIP : " " | "\t" | "\n" | "\r" | "\f" ;
 
 INJECT PARSER_CLASS :
 {
+   /**
+    * Set whether the parser recognizes nested multiline comments
+    */
    public void allowNestedComments(boolean allow) {
       token_source.setAllowNestedComments(allow);
    }
