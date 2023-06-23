@@ -12,6 +12,9 @@
 *   Stefan Bischof (bipolis.org) - initial
 */
 
+// White space
+SKIP : " " | "\t" | "\n" | "\r" | "\f" ;
+
 INJECT LEXER_CLASS :
 {
   // It seems that multiline comments can nest 
@@ -46,6 +49,41 @@ INJECT LEXER_CLASS :
     return tok;
   }
 }
+
+UNPARSED #Comment : 
+  < SINGLE_LINE_COMMENT : ("//" | "--") (~["\n"])* "\n" > #SingleLineComment
+;
+
+<DEFAULT, IN_MULTI_LINE_COMMENT>
+UNPARSED #Comment :
+  <SLASH_STAR : "/*"> : IN_MULTI_LINE_COMMENT
+;
+
+< IN_MULTI_LINE_COMMENT >
+UNPARSED #Comment :
+  < MULTI_LINE_COMMENT : "*/" > #MultiLineComment : DEFAULT
+;
+
+< IN_MULTI_LINE_COMMENT >
+SKIP :
+  < ~[ ] >
+;
+
+/*
+ * Separators
+ */
+< DEFAULT >
+TOKEN #Separator :
+  < LPAREN : "(" >
+| < RPAREN : ")" >
+| < LBRACE : "{" >
+| < RBRACE : "}" >
+| < LBRACKET : "[" >
+| < RBRACKET : "]" >
+| < COMMA : "," >
+| < SEMICOLON : ";" >
+| < DOT : "." >
+;
 
 TOKEN #Keyword:
   < ABSOLUTE : "ABSOLUTE" >
@@ -289,50 +327,7 @@ TOKEN #Keyword:
 ;
 
 
-// White space
-SKIP :
-  " "
-| "\t"
-| "\n"
-| "\r"
-| "\f"
-;
 
-
-UNPARSED : 
-  < SINGLE_LINE_COMMENT : ("//" | "--") (~["\n"])* "\n" > 
-;
-
-<DEFAULT, IN_MULTI_LINE_COMMENT>
-UNPARSED :
-  <SLASH_STAR : "/*"> : IN_MULTI_LINE_COMMENT
-;
-
-< IN_MULTI_LINE_COMMENT >
-UNPARSED :
-  < MULTI_LINE_COMMENT : "*/" > : DEFAULT
-;
-
-< IN_MULTI_LINE_COMMENT >
-SKIP :
-  < ~[ ] >
-;
-
-/*
- * Separators
- */
-< DEFAULT >
-TOKEN #Separator :
-  < LPAREN : "(" >
-| < RPAREN : ")" >
-| < LBRACE : "{" >
-| < RBRACE : "}" >
-| < LBRACKET : "[" >
-| < RBRACKET : "]" >
-| < COMMA : "," >
-| < SEMICOLON : ";" >
-| < DOT : "." >
-;
 
 /*
  * Operators
