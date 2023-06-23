@@ -20,6 +20,7 @@ INJECT PARSER_CLASS :
   import org.eclipse.daanse.mdx.model.api.select.Axis;
   import org.eclipse.daanse.mdx.model.api.select.SelectQueryClause;
   import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClause;
+{}  
 
 // ----------------------------------------------------------------------------
 // MDX Statement
@@ -329,7 +330,7 @@ INJECT SelectQueryAxesClause :
    }
 }   
 
-SelectQueryAxesClause# :
+SelectQueryAxesClause :
   SelectQueryAxisClause
   (
     < COMMA > 
@@ -376,7 +377,7 @@ SelectSubcubeClauseStatement :
 
 INJECT SelectQueryAsteriskClause : implements org.eclipse.daanse.mdx.model.api.select.SelectQueryAsteriskClause;
 
-SelectQueryAsteriskClause# :
+SelectQueryAsteriskClause :
   < ASTERISK >
 ;
 
@@ -412,7 +413,7 @@ INJECT SelectStatement :
 }
 
 //https://learn.microsoft.com/en-us/sql/mdx/mdx-data-manipulation-select?view=sql-server-ver16
-SelectStatement SelectStatement :
+#SelectStatement :
   (
     < WITH > (SelectWithClause)+
   )?
@@ -452,7 +453,7 @@ INJECT SelectSubcubeClauseName :
    }
 }   
 
-SelectSubcubeClauseName SelectSubcubeClauseName# :
+SelectSubcubeClauseName SelectSubcubeClauseName :
   NameObjectIdentifier
   {
     return CURRENT_NODE;
@@ -487,7 +488,7 @@ INJECT ReturnItem :
    }
 }
 
-ReturnItem# : CompoundId ;
+ReturnItem : CompoundId ;
 
 INJECT CreateCellCalculationBodyClause : implements org.eclipse.daanse.mdx.model.api.select.CreateCellCalculationBodyClause;
 
@@ -512,7 +513,6 @@ INJECT CreateMemberBodyClause :
   import java.util.List;
   import java.util.ArrayList;
   import org.eclipse.daanse.mdx.model.api.expression.Expression;
-  import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
   import org.eclipse.daanse.mdx.model.api.select.MemberPropertyDefinition;
   implements org.eclipse.daanse.mdx.model.api.select.CreateMemberBodyClause
 {
