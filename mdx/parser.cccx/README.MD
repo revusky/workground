@@ -36,7 +36,7 @@ There is also no problem with having method names that are the same as type name
 
      public Foobar Foobar() {...}
 
-perfectly well because the first `Foobar` is the type and the second `Foobar` is the method, and they exist in completely different namespaces and certainly do not step on one another.
+perfectly well because the first `Foobar` is the type and the second `Foobar` is the method, and they exist in completely different namespaces and certainly do not step on one another. 
 
-Now, it's true that reusing the same names is arguably confusing. Maybe somewhat, but it is easy to exaggerate. I think the general ugliness of having to name your parser productions `parseFoo` and your generated node type `ASTFoo` (or something like that) is really just very ugly. And again, I don't think that reusing the same names for the API as the concrete node (that implements the API) really does lead to confusing code. For the most part, the whole thing follows the principle of least surprise quite well. And this way, we end up with a quite clean looking readable grammar -- compared to the starting point anyway!
+Now, it's true that reusing the same names is arguably confusing. Maybe somewhat, but it is easy to exaggerate. You see, really, in any modern IDE, you just hover over a variable name with the mouse and it gives you the fully qualified type. So it's basically a non-problem. To solve this *ersatz* problem by having all this ugliness of having to name your parser productions `parseFoo` and your generated node type `ASTFoo` (or something like that) is just not a good trade-off IMHO. And again, I don't think that reusing the same names for the API as the concrete node (that implements the API) really does lead to confusing code. For the most part, the whole thing follows the principle of least surprise quite well. And this way, we end up with a quite clean looking readable grammar -- compared to the starting point anyway!
 
