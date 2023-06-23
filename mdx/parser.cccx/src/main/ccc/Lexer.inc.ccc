@@ -15,6 +15,13 @@
 // White space
 SKIP : " " | "\t" | "\n" | "\r" | "\f" ;
 
+INJECT PARSER_CLASS :
+{
+   public void allowNestedComments(boolean allow) {
+      token_source.setAllowNestedComments(allow);
+   }
+}
+
 INJECT LEXER_CLASS :
 {
   // It seems that multiline comments can nest 
@@ -23,6 +30,12 @@ INJECT LEXER_CLASS :
   // of the nesting levels of the comments and
   // where the outermost comment began.
   private int commentNesting, commentStartOffset;
+  private boolean allowNestedComments=true;
+
+  void setAllowNestedComments(boolean allowNestedComments) {
+      this.allowNestedComments = allowNestedComments;
+      if (!allowNestedComments && commentNesting > 1) commentNesting = 1;
+  }
 
   private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
     if (tok.getType() == SLASH_STAR) {
@@ -32,6 +45,7 @@ INJECT LEXER_CLASS :
         tok.setBeginOffset(commentStartOffset);
       }
       ++commentNesting;
+      if (!allowNestedComments) commentNesting = 1;
     }
     else if (tok.getType() == MULTI_LINE_COMMENT) {
       --commentNesting;

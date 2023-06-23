@@ -488,7 +488,8 @@ Expression parseTerm2 :
       )
       );
     }
-  | < MINUS > y = parseTerm
+    | 
+    < MINUS > y = parseTerm
     {
       x = new CallExpressionR("-", Type.TERM_INFIX, List.of(
       x, y
@@ -539,268 +540,268 @@ Expression parseFactor :
 {
   Expression p;
 }
-  p = PrimaryExpression
-  {
-    return p;
-  }
-| < PLUS > p = PrimaryExpression
-  {
-    return p;
-  }
-| < MINUS > p = PrimaryExpression
-  {
-    return new CallExpressionR("-", Type.TERM_PREFIX, List.of(
-    p
-    )
-    );
-  }
-| < EXISTING > p = PrimaryExpression
-  {
-    return new CallExpressionR("Existing", Type.TERM_PREFIX, List.of(
-    p
-    )
-    );
-  }
-;
-
-INJECT PrimaryExpression : implements org.eclipse.daanse.mdx.model.api.expression.Expression
-
-PrimaryExpression :
-{
-  Expression expression;
-}
-  expression = parseAtom
-  (
-    < DOT > 
-    expression = objectIdentifierOrFuncall(expression)
-  )*
-;
-
-Expression objectIdentifierOrFuncall(Expression left) :
-{
-  ObjectIdentifier objectIdentifier;
-  List < Expression > argList = null;
-}
-  objectIdentifier = parseIdentifier
-  (
-    < LPAREN >
-    (
-      argList = expOrEmptyList
-    )
-    < RPAREN >
-  )?
-  {
-    return createCall(left, objectIdentifier, argList);
-  }
-;
-
-Literal#void :
-  <SINGLE_QUOTED_STRING>
-  |
-  <DOUBLE_QUOTED_STRING>
-  |
-  <UNSIGNED_INTEGER_LITERAL>
-  |
-  <DECIMAL_NUMERIC_LITERAL>
-  |
-  <APPROX_NUMERIC_LITERAL>
-  |
-  <NULL>
-;
-
-INJECT CastExpression :
-   import java.util.List;
-   import org.eclipse.daanse.mdx.model.api.expression.Expression;
-   implements org.eclipse.daanse.mdx.model.api.expression.CallExpression
-{
-    @Property Expression expression;
-
-    public String name() {
-      return "CAST";
-    }
-
-    public Type type() {
-      return Type.CAST;
-    }
-
-    public List<Expression> expressions() {
-      NameObjectIdentifier noi = firstChildOfType(NameObjectIdentifier.class);
-      return List.of(getExpression(), noi);
-    }
-}
-
-CastExpression :
-{
-  Expression expression;
-}
-  <CAST>
-  <LPAREN>
-  expression = parseUnaliasedExpression
-  {CURRENT_NODE.setExpression(expression);}
-  <AS>
-  NameObjectIdentifier 
-  <RPAREN>
-;
-
-Expression parseExpressionList#void :
-{
-   List<Expression> expressions;
-}
-  < LPAREN > expressions = expList < RPAREN >
-  {
-    // Whereas ([Sales],[Time]) and () are tuples, ([Sales]) and (5)
-    // are just expressions.
-    return new CallExpressionR(
-    "()", Type.PARENTHESES, expressions);
-  }
-;
-
-Expression parseTuple#void :
-{
-   List<Expression> expressions;
-}
-  // set built from sets/tuples
-  < LBRACE >
-  (
-    SCAN < RBRACE > =>
+    p = PrimaryExpression
     {
-      expressions = Collections.emptyList();
+      return p;
     }
+  | < PLUS > p = PrimaryExpression
+    {
+      return p;
+    }
+  | < MINUS > p = PrimaryExpression
+    {
+      return new CallExpressionR("-", Type.TERM_PREFIX, List.of(
+      p
+      )
+      );
+    }
+  | < EXISTING > p = PrimaryExpression
+    {
+      return new CallExpressionR("Existing", Type.TERM_PREFIX, List.of(
+      p
+      )
+      );
+    }
+  ;
+
+  INJECT PrimaryExpression : implements org.eclipse.daanse.mdx.model.api.expression.Expression
+
+  PrimaryExpression :
+  {
+    Expression expression;
+  }
+    expression = parseAtom
+    (
+      < DOT > 
+      expression = objectIdentifierOrFuncall(expression)
+    )*
+  ;
+
+  Expression objectIdentifierOrFuncall(Expression left) :
+  {
+    ObjectIdentifier objectIdentifier;
+    List < Expression > argList = null;
+  }
+    objectIdentifier = parseIdentifier
+    (
+      < LPAREN >
+      (
+        argList = expOrEmptyList
+      )
+      < RPAREN >
+    )?
+    {
+      return createCall(left, objectIdentifier, argList);
+    }
+  ;
+
+  Literal#void :
+    <SINGLE_QUOTED_STRING>
     |
-    expressions = expList
-  )
-  < RBRACE >
+    <DOUBLE_QUOTED_STRING>
+    |
+    <UNSIGNED_INTEGER_LITERAL>
+    |
+    <DECIMAL_NUMERIC_LITERAL>
+    |
+    <APPROX_NUMERIC_LITERAL>
+    |
+    <NULL>
+  ;
+
+  INJECT CastExpression :
+    import java.util.List;
+    import org.eclipse.daanse.mdx.model.api.expression.Expression;
+    implements org.eclipse.daanse.mdx.model.api.expression.CallExpression
   {
-    return new CallExpressionR(
-    "{}", Type.BRACES, expressions);
+      @Property Expression expression;
+
+      public String name() {
+        return "CAST";
+      }
+
+      public Type type() {
+        return Type.CAST;
+      }
+
+      public List<Expression> expressions() {
+        NameObjectIdentifier noi = firstChildOfType(NameObjectIdentifier.class);
+        return List.of(getExpression(), noi);
+      }
   }
-;
 
-Expression parseOnlyName#void :
-   NameObjectIdentifier ASSERT ~(<BANG>|<LPAREN>) =>||
-   {
-      return (Expression) peekNode();
-   }
-;
+  CastExpression :
+  {
+    Expression expression;
+  }
+    <CAST>
+    <LPAREN>
+    expression = parseUnaliasedExpression
+    {CURRENT_NODE.setExpression(expression);}
+    <AS>
+    NameObjectIdentifier 
+    <RPAREN>
+  ;
 
-Expression parseMaybeBangMaybeFunctionCall#void :
-  // Function call "foo(a, b)" or "whiz!bang!foo(a, b)".
-  // Properties "x.PROP" and methods "exp.meth(a)" are in primary().
-{
-  Expression expression;
-  NameObjectIdentifier nameObjectIdentifier;
-  List < Expression > expressions = null;
-}
-  nameObjectIdentifier = NameObjectIdentifier
-  (
-    < BANG > 
-    nameObjectIdentifier = NameObjectIdentifier
+  Expression parseExpressionList#void :
+  {
+    List<Expression> expressions;
+  }
+    < LPAREN > expressions = expList < RPAREN >
     {
-    // We support the syntax for qualifying function names with package
-    // names separated by bang ('!'), e.g. 'whiz!bang!foo(a, b)'
-    // but currently we ignore the qualifiers. The previous example is
-    // equivalent to 'foo(a, b)'.
+      // Whereas ([Sales],[Time]) and () are tuples, ([Sales]) and (5)
+      // are just expressions.
+      return new CallExpressionR(
+      "()", Type.PARENTHESES, expressions);
     }
-  )*
-  (
-    < LPAREN >
+  ;
+
+  Expression parseTuple#void :
+  {
+    List<Expression> expressions;
+  }
+    // set built from sets/tuples
+    < LBRACE >
     (
-      SCAN < RPAREN > =>
+      SCAN < RBRACE > =>
       {
         expressions = Collections.emptyList();
       }
       |
-      expressions = expOrEmptyList
+      expressions = expList
     )
-    < RPAREN >
-  )?
-  {
-    return createCall(null, nameObjectIdentifier, expressions);
-  }
-;
-
-Expression parseAtom#void :
-{
-  Expression expression;
-}
-  (
-    Literal {expression = (Expression) lastConsumedToken;}
-    | 
-    expression=CastExpression
-    |
-    expression=parseExpressionList
-    | 
-    expression=parseTuple 
-    | 
-    expression = parseCaseExpression 
-    |
-    expression = parseOnlyName 
-    |
-    expression = parseMaybeBangMaybeFunctionCall
-  )
-  {
-    return expression;
-  }
-;
-
-Expression parseCaseExpression#void :
-{
-  Expression expression, expression2;
-  List < Expression > expressions = new ArrayList <> ();
-  boolean match = false;
-}
-  < CASE >
-  (
-    expression = parseExpression
-    {
-      match = true;
-      expressions.add(expression);
-    }
-  )?
-  (
-    < WHEN > expression = parseExpression < THEN > expression2 = parseExpression
-    {
-      expressions.add(expression);
-      expressions.add(expression2);
-    }
-  )*
-  (
-    < ELSE > expression = parseExpression
-    {
-      expressions.add(expression);
-    }
-  )?
-  < END >
-  {
-    if (match)
+    < RBRACE >
     {
       return new CallExpressionR(
-      "_CaseMatch", Type.TERM_CASE, expressions);
+      "{}", Type.BRACES, expressions);
     }
-    else
+  ;
+
+  Expression parseOnlyName#void :
+    NameObjectIdentifier ASSERT ~(<BANG>|<LPAREN>) =>||
     {
-      return new CallExpressionR(
-      "_CaseTest", Type.TERM_CASE, expressions);
+        return (Expression) peekNode();
     }
-  }
-;
+  ;
 
-INJECT FormulaExpression : implements org.eclipse.daanse.mdx.model.api.expression.FormulaExpression;
-
-FormulaExpression parseFormulaExpression#FormulaExpression :
-  parseIdentifier < EQ > parseIdentifier
+  Expression parseMaybeBangMaybeFunctionCall#void :
+    // Function call "foo(a, b)" or "whiz!bang!foo(a, b)".
+    // Properties "x.PROP" and methods "exp.meth(a)" are in primary().
   {
-    return CURRENT_NODE;
+    Expression expression;
+    NameObjectIdentifier nameObjectIdentifier;
+    List < Expression > expressions = null;
   }
-;
+    nameObjectIdentifier = NameObjectIdentifier
+    (
+      < BANG > 
+      nameObjectIdentifier = NameObjectIdentifier
+      {
+      // We support the syntax for qualifying function names with package
+      // names separated by bang ('!'), e.g. 'whiz!bang!foo(a, b)'
+      // but currently we ignore the qualifiers. The previous example is
+      // equivalent to 'foo(a, b)'.
+      }
+    )*
+    (
+      < LPAREN >
+      (
+        SCAN < RPAREN > =>
+        {
+          expressions = Collections.emptyList();
+        }
+        |
+        expressions = expOrEmptyList
+      )
+      < RPAREN >
+    )?
+    {
+      return createCall(null, nameObjectIdentifier, expressions);
+    }
+  ;
 
-INJECT MemberPropertyDefinition :
-  import org.eclipse.daanse.mdx.model.api.expression.Expression;
-  import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier;
-  implements org.eclipse.daanse.mdx.model.api.select.MemberPropertyDefinition
-{
-   public ObjectIdentifier objectIdentifier() {
-      return (ObjectIdentifier) getChild(0);
+  Expression parseAtom#void :
+  {
+    Expression expression;
+  }
+    (
+      Literal {expression = (Expression) lastConsumedToken;}
+      | 
+      expression=CastExpression
+      |
+      expression=parseExpressionList
+      | 
+      expression=parseTuple 
+      | 
+      expression = parseCaseExpression 
+      |
+      expression = parseOnlyName 
+      |
+      expression = parseMaybeBangMaybeFunctionCall
+    )
+    {
+      return expression;
+    }
+  ;
+
+  Expression parseCaseExpression#void :
+  {
+    Expression expression, expression2;
+    List < Expression > expressions = new ArrayList <> ();
+    boolean match = false;
+  }
+    < CASE >
+    (
+      expression = parseExpression
+      {
+        match = true;
+        expressions.add(expression);
+      }
+    )?
+    (
+      < WHEN > expression = parseExpression < THEN > expression2 = parseExpression
+      {
+        expressions.add(expression);
+        expressions.add(expression2);
+      }
+    )*
+    (
+      < ELSE > expression = parseExpression
+      {
+        expressions.add(expression);
+      }
+    )?
+    < END >
+    {
+      if (match)
+      {
+        return new CallExpressionR(
+        "_CaseMatch", Type.TERM_CASE, expressions);
+      }
+      else
+      {
+        return new CallExpressionR(
+        "_CaseTest", Type.TERM_CASE, expressions);
+      }
+    }
+  ;
+
+  INJECT FormulaExpression : implements org.eclipse.daanse.mdx.model.api.expression.FormulaExpression;
+
+  FormulaExpression parseFormulaExpression#FormulaExpression :
+    parseIdentifier < EQ > parseIdentifier
+    {
+      return CURRENT_NODE;
+    }
+  ;
+
+  INJECT MemberPropertyDefinition :
+    import org.eclipse.daanse.mdx.model.api.expression.Expression;
+    import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier;
+    implements org.eclipse.daanse.mdx.model.api.select.MemberPropertyDefinition
+  {
+    public ObjectIdentifier objectIdentifier() {
+        return (ObjectIdentifier) getChild(0);
    }
 
    public Expression expression() {
