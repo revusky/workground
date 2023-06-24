@@ -17,6 +17,6 @@ import java.util.List;
 
 public /*non-sealed*/ interface CompoundId extends Expression {
 
-    List<ObjectIdentifier> objectIdentifiers();
+    List<? extends ObjectIdentifier> objectIdentifiers();
 
 }

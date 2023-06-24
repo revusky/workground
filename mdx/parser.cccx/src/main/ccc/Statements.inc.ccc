@@ -196,7 +196,7 @@ INJECT DMVStatement :
   < DOT > 
   NameObjectIdentifier
   (
-     < WHERE > parseExpression()
+     < WHERE > Expression()
   )?
   {
      return CURRENT_NODE;
@@ -231,7 +231,7 @@ INJECT SelectQueryAxisClause :
 // <SelectQueryAxisClause> ::= [NON EMPTY] <set> [<dimProps>] ON <axis_name>
 SelectQueryAxisClause :
   (< NON > < EMPTY >) ?
-  parseExpression
+  Expression
   (
     SelectDimensionPropertyListClause
   )?
@@ -275,7 +275,7 @@ INJECT CreateSetBodyClause :
 }  
 
 CreateSetBodyClause :
-  CompoundId < AS > parseExpression
+  CompoundId < AS > Expression
 ;
 
 INJECT SelectCellPropertyListClause :
@@ -316,7 +316,7 @@ INJECT SelectSlicerAxisClause :
 
 SelectSlicerAxisClause :
   < WHERE > 
-  parseExpression
+  Expression
 ;
 
 
@@ -533,7 +533,7 @@ INJECT CreateMemberBodyClause :
 CreateMemberBodyClause :
   CompoundId 
   < AS > 
-  parseExpression
+  Expression
     (
      < COMMA > MemberPropertyDefinition
     )*

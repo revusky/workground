@@ -21,7 +21,7 @@ import java.util.List;
 
 public non-sealed interface DMVStatement extends MdxStatement {
 
-    List<CompoundId> columns();
+    List<? extends CompoundId> columns();
 
     NameObjectIdentifier table();
 

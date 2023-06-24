@@ -21,7 +21,7 @@ public /*non-sealed*/ interface CallExpression extends Expression {
 
     CallExpression.Type type();
 
-    List<Expression> expressions();
+    List<? extends Expression> expressions();
 
     public enum Type {
 

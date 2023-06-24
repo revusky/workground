@@ -461,7 +461,7 @@ TOKEN :
 
 INJECT StringLiteral :
    import static PARSER_PACKAGE.PARSER_CLASS.stripQuotes;
-   implements org.eclipse.daanse.mdx.model.api.expression.StringLiteral 
+   implements Literal, org.eclipse.daanse.mdx.model.api.expression.StringLiteral 
 {
    private String value;
 
@@ -473,11 +473,11 @@ INJECT StringLiteral :
 
 INJECT NumericLiteral : 
   import java.math.BigDecimal;
-  implements org.eclipse.daanse.mdx.model.api.expression.NumericLiteral
+  implements Literal, org.eclipse.daanse.mdx.model.api.expression.NumericLiteral
 {
    public BigDecimal value() {
       return new BigDecimal(getImage());
    }
 }
 
-INJECT NullLiteral : implements org.eclipse.daanse.mdx.model.api.expression.NullLiteral;
+INJECT NullLiteral : implements Literal, org.eclipse.daanse.mdx.model.api.expression.NullLiteral;

@@ -40,5 +40,5 @@ public non-sealed interface DrillthroughStatement extends MdxStatement {
     /**
      * @return A comma-separated list of dimension attributes and measures.
      */
-    List<ReturnItem> returnItems();
+    List<? extends ReturnItem> returnItems();
 }

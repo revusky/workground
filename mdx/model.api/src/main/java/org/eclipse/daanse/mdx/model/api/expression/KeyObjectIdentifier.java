@@ -17,5 +17,5 @@ import java.util.List;
 
 public non-sealed interface KeyObjectIdentifier extends ObjectIdentifier {
 
-    List<NameObjectIdentifier> nameObjectIdentifiers();
+    List<? extends NameObjectIdentifier> nameObjectIdentifiers();
 }

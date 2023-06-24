@@ -116,8 +116,7 @@ public class MdxParserWrapper implements org.eclipse.daanse.mdx.parser.api.MdxPa
     @Override
     public Expression parseExpression() throws MdxParserException {
         try {
-            return delegate.parseExpression();
-
+            return delegate.Expression();
         } catch (Exception e) {
             throw new MdxParserException(e);
         } finally {

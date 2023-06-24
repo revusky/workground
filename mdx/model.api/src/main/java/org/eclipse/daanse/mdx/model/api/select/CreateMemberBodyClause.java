@@ -24,6 +24,6 @@ public non-sealed interface CreateMemberBodyClause extends SelectWithClause {
 
     Expression expression();
 
-    List<MemberPropertyDefinition> memberPropertyDefinitions();
+    List<? extends MemberPropertyDefinition> memberPropertyDefinitions();
 
 }

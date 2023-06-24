@@ -17,6 +17,6 @@ import java.util.List;
 
 public non-sealed interface SelectQueryAxesClause extends SelectQueryClause {
 
-    List<SelectQueryAxisClause> selectQueryAxisClauses();
+    List<? extends SelectQueryAxisClause> selectQueryAxisClauses();
 
 }

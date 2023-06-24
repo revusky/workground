@@ -302,7 +302,7 @@ public class SimpleUnparser implements UnParser {
         return new StringBuilder(s);
     }
 
-    private String unparseCompoundIds(List<CompoundId> compoundIdList) {
+    private String unparseCompoundIds(List<? extends CompoundId> compoundIdList) {
         return compoundIdList.stream().map(this::unparseCompoundId).map(Object::toString).collect(Collectors.joining(
             ","));
     }
@@ -350,7 +350,7 @@ public class SimpleUnparser implements UnParser {
     private StringBuilder unparseCallExpression(CallExpression callExpression) {
         StringBuilder sb = new StringBuilder();
         String name = callExpression.name();
-        List<Expression> expressions = callExpression.expressions();
+        List<? extends Expression> expressions = callExpression.expressions();
         String expressionText;
         String object = "";
         if (CallExpression.Type.METHOD.equals(callExpression.type()) && !expressions.isEmpty()) {
@@ -402,7 +402,7 @@ public class SimpleUnparser implements UnParser {
         return sb;
     }
 
-    private String unparseExpressions(List<Expression> expressions) {
+    private String unparseExpressions(List<? extends Expression> expressions) {
         return expressions.stream().map(this::unparseExpression).map(Object::toString).collect(Collectors.joining(","));
     }
 
@@ -410,7 +410,7 @@ public class SimpleUnparser implements UnParser {
         return new StringBuilder("*");
     }
 
-    public StringBuilder unparseSelectWithClauses(List<SelectWithClause> clauses) {
+    public StringBuilder unparseSelectWithClauses(List<? extends SelectWithClause> clauses) {
 
         String s = clauses.stream().map(this::unparseSelectWithClause).map(Object::toString)
             .collect(Collectors.joining(DELIMITER));
@@ -498,7 +498,7 @@ public class SimpleUnparser implements UnParser {
         return sb;
     }
 
-    public StringBuilder unparseReturnItems(List<ReturnItem> returnItems) {
+    public StringBuilder unparseReturnItems(List<? extends ReturnItem> returnItems) {
         StringBuilder sb = new StringBuilder();
         if (!returnItems.isEmpty()) {
             sb.append("RETURN ");

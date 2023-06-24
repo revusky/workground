@@ -18,5 +18,5 @@ import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
 import java.util.List;
 
 public interface SelectDimensionPropertyListClause {
-    List<CompoundId> properties();
+    List<? extends CompoundId> properties();
 }
