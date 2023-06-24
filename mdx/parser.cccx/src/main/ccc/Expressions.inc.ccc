@@ -22,15 +22,6 @@ INJECT PARSER_CLASS :
   import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
   import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
 {
-	public static String stripQuotes(String s, String prefix, String suffix, String quoted) {
-		if (!(s.startsWith(prefix) && s.endsWith(suffix))) {
-            throw new IllegalArgumentException("Invalid quotes: " + s);
-        }
-		s = s.substring(prefix.length(), s.length() - suffix.length());
-		s = s.replace(quoted, suffix);
-		return s;
-	}
-
 	public static Expression createCall(Expression left, ObjectIdentifier objectIdentifier,
 			List<Expression> expressions) {
 		final String name = objectIdentifier instanceof NameObjectIdentifier nameObjectIdentifier
@@ -207,7 +198,7 @@ NameObjectIdentifier :
   | 
   < QUOTED_ID >
   {
-    String name = stripQuotes(getTokenImage(0), "[", "]", "]]");
+    String name = stripQuotes(getTokenImage(0));
     CURRENT_NODE.setName(name);
     CURRENT_NODE.setQuoting(ObjectIdentifier.Quoting.QUOTED);
   }
@@ -241,7 +232,7 @@ AmpId#NameObjectIdentifier :
  (
   < AMP_QUOTED_ID >
   {
-    String name = stripQuotes(getTokenImage(0), "&[", "]", "]]");
+    String name = stripQuotes(getTokenImage(0).substring(1));
     CURRENT_NODE.setName(name);
     CURRENT_NODE.setQuoting(ObjectIdentifier.Quoting.QUOTED);
   }
@@ -564,13 +555,13 @@ Expression parseFactor :
     }
   ;
 
-  INJECT PrimaryExpression : implements org.eclipse.daanse.mdx.model.api.expression.Expression
+  INJECT PrimaryExpression : extends org.eclipse.daanse.mdx.model.api.expression.Expression
 
-  PrimaryExpression :
+  PrimaryExpression#interface :
   {
     Expression expression;
   }
-    expression = parseAtom
+    expression = AtomicExpression
     (
       < DOT > 
       expression = objectIdentifierOrFuncall(expression)
@@ -596,9 +587,7 @@ Expression parseFactor :
   ;
 
   Literal#void :
-    <SINGLE_QUOTED_STRING>
-    |
-    <DOUBLE_QUOTED_STRING>
+    <STRING_LITERAL>
     |
     <UNSIGNED_INTEGER_LITERAL>
     |
@@ -612,7 +601,7 @@ Expression parseFactor :
   INJECT CastExpression :
     import java.util.List;
     import org.eclipse.daanse.mdx.model.api.expression.Expression;
-    implements org.eclipse.daanse.mdx.model.api.expression.CallExpression
+    implements AtomicExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
   {
       @Property Expression expression;
 
@@ -656,7 +645,9 @@ Expression parseFactor :
     }
   ;
 
-  Expression parseTuple#void :
+  INJECT Tuple : implements AtomicExpression
+
+  Expression Tuple :
   {
     List<Expression> expressions;
   }
@@ -677,7 +668,7 @@ Expression parseFactor :
     }
   ;
 
-  Expression parseOnlyName#void :
+  Expression OnlyName#void :
     NameObjectIdentifier ASSERT ~(<BANG>|<LPAREN>) =>||
     {
         return (Expression) peekNode();
@@ -720,7 +711,9 @@ Expression parseFactor :
     }
   ;
 
-  Expression parseAtom#void :
+  INJECT AtomicExpression : extends PrimaryExpression
+
+  Expression AtomicExpression#interface :
   {
     Expression expression;
   }
@@ -731,11 +724,11 @@ Expression parseFactor :
       |
       expression=parseExpressionList
       | 
-      expression=parseTuple 
+      expression=Tuple 
       | 
-      expression = parseCaseExpression 
+      expression = CaseExpression 
       |
-      expression = parseOnlyName 
+      expression = OnlyName 
       |
       expression = parseMaybeBangMaybeFunctionCall
     )
@@ -744,7 +737,9 @@ Expression parseFactor :
     }
   ;
 
-  Expression parseCaseExpression#void :
+  INJECT CaseExpression : implements AtomicExpression 
+
+  Expression CaseExpression :
   {
     Expression expression, expression2;
     List < Expression > expressions = new ArrayList <> ();

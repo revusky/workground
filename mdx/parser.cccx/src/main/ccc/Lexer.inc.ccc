@@ -23,6 +23,31 @@ INJECT PARSER_CLASS :
    public void allowNestedComments(boolean allow) {
       token_source.setAllowNestedComments(allow);
    }
+
+   /**
+    * Strip the opening/closing quote characters
+    * and also unescapes the doubled quote characters
+    * in the string.
+    */
+   public static String stripQuotes(String s) {
+      if (s.length() == 2) return "";
+      char quoteChar = s.charAt(0);
+      s = s.substring(1, s.length());
+      int numQuoteChars = 0;
+      if (s.indexOf(quoteChar) >=0) {
+         StringBuilder buf = new StringBuilder();
+         for (int i = 0; i< s.length(); i++) {
+            char c = s.charAt(i);
+            if (c != quoteChar) buf.append(c);
+            else {
+              ++numQuoteChars;
+              if (numQuoteChars % 2 == 1) buf.append(quoteChar);
+            }
+            s = buf.toString();
+         }
+      }
+      return s;
+	  }
 }
 
 INJECT LEXER_CLASS :
@@ -145,13 +170,12 @@ TOKEN #Keyword:
 | < COALESCEEMPTY : "COALESCEEMPTY" >
 | < COLUMN : "COLUMN" >
 | < COLUMNS : "COLUMNS" >
-| < CREATE : "CREATE" >
-| < COLUMNS : "COLUMNS" >
 | < CORRELATION : "CORRELATION" >
 | < COUNT : "COUNT" >
 | < COUSIN : "COUSIN" >
 | < COVARIANCE : "COVARIANCE" >
 | < COVARIANCEN : "COVARIANCEN" >
+| < CREATE : "CREATE" >
 | < CREATEPROPERTYSET : "CREATEPROPERTYSET" >
 | < CREATEVIRTUALDIMENSION : "CREATEVIRTUALDIMENSION" >
 | < COMMIT : "COMMIT" >
@@ -413,16 +437,19 @@ TOKEN #NumericLiteral :
   < #EXPONENT : [ "e", "E" ] ([ "+", "-" ])? ([ "0"-"9" ])+ >
 ;
 
-TOKEN #StringLiteral : 
-  < SINGLE_QUOTED_STRING :
+TOKEN : 
+  < STRING_LITERAL : <SINGLE_QUOTED_STRING> | <DOUBLE_QUOTED_STRING> > #StringLiteral
+  |
+  < #SINGLE_QUOTED_STRING :
     "'"
     (
       (~[ "'" ])
     | ("''")
     )*
-    "'" >
+    "'" 
+  >
   |
-  < DOUBLE_QUOTED_STRING :
+  < #DOUBLE_QUOTED_STRING :
     "\""
     (
       (~[ "\"" ])
@@ -436,17 +463,11 @@ INJECT StringLiteral :
    import static PARSER_PACKAGE.PARSER_CLASS.stripQuotes;
    implements org.eclipse.daanse.mdx.model.api.expression.StringLiteral 
 {
-   @Property String value;
-   public String value() {
-      return getValue();
-   }
+   private String value;
 
-   public void close() {
-      String image = getImage();
-      if (image.charAt(0) == '\'') 
-         value = stripQuotes(image, "'", "'", "''");
-      else 
-         value = stripQuotes(image, "\"", "\"", "\"\"");
+   public String value() {
+      if (value == null) value = stripQuotes(getImage());
+      return value;
    }
 }
 
