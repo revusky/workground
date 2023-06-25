@@ -16,9 +16,7 @@
 // separate INCLUDE
 
 INJECT PARSER_CLASS :
-  import org.eclipse.daanse.mdx.model.api.expression.Expression;
   import org.eclipse.daanse.mdx.model.api.expression.CallExpression.Type;
-  import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
 {
 	public static Expression createCall(Expression left, ObjectIdentifier objectIdentifier,
 			List<Expression> expressions) {
@@ -29,10 +27,10 @@ INJECT PARSER_CLASS :
 			if (left != null) {
 				// Method syntax: "x.foo(arg1, arg2)" or "x.foo()"
 				expressions.add(0, left);
-				return new CallExpressionR(name, Type.METHOD, expressions);
+				return new CallExpressionImpl(name, Type.METHOD, expressions);
 			} else {
 				// Function syntax: "foo(arg1, arg2)" or "foo()"
-				return new CallExpressionR(name, Type.FUNCTION, expressions);
+				return new CallExpressionImpl(name, Type.FUNCTION, expressions);
 			}
 		} else {
 			// Member syntax: "foo.bar"
@@ -61,15 +59,54 @@ INJECT PARSER_CLASS :
 			} else if (left == null) {
         return new CompoundId(objectIdentifier);
 			} else {
-				return new CallExpressionR(name, type, List.of(left));
+				return new CallExpressionImpl(name, type, List.of(left));
 			}
 		}
 	}
+
+  public static class CallExpressionImpl extends NODE_PACKAGE.BaseNode implements Expression, org.eclipse.daanse.mdx.model.api.expression.CallExpression {
+      private String name;
+      private Type type;
+      List<? extends Expression> expressions;
+      public CallExpressionImpl(String name,
+                                Type type,
+                                List<? extends Expression> expressions) 
+      {
+         assert name != null;
+         assert type != null;
+         assert expressions != null;
+
+         this.name = name;
+         this.type = type;
+         this.expressions = expressions;
+         switch (type) {
+            case BRACES:
+                assert name.equals("{}");
+                break;
+            case PARENTHESES:
+                assert name.equals("()");
+                break;
+            case INTERNAL:
+                assert name.startsWith("$");
+                break;
+            case EMPTY:
+                assert name.equals("");
+                break;
+            default:
+                assert !name.startsWith("$") && !name.equals("{}") && !name.equals("()");
+                break;
+         }
+      }
+
+      public String name() {return name;}
+      public Type type() { return type;}
+      public List<? extends Expression>  expressions() {return expressions;}
+  }
 }
 
-//INJECT Expression : extends org.eclipse.daanse.model.api.Expression
+INJECT Expression : extends org.eclipse.daanse.mdx.model.api.expression.Expression
 
-Expression Expression#parseExpression :
+Expression Expression#interface :
 {
   Expression expression;
   ObjectIdentifier objectIdentifier;
@@ -80,7 +117,7 @@ Expression Expression#parseExpression :
     objectIdentifier = ObjectIdentifier
     {
       CompoundId compoundId = new CompoundId(objectIdentifier);
-      expression = new CallExpressionR("AS", Type.TERM_INFIX, List.of(
+      expression = new PARSER_CLASS.CallExpressionImpl("AS", Type.TERM_INFIX, List.of(
       expression, compoundId
       )
       );
@@ -102,7 +139,7 @@ Expression parseExpressionOrEmpty :
   }
   | /* empty */
   {
-    return new CallExpressionR("", Type.EMPTY, List.of());
+    return new PARSER_CLASS.CallExpressionImpl("", Type.EMPTY, List.of());
   }
 ;
 
@@ -180,39 +217,29 @@ ObjectIdentifier ObjectIdentifier#interface :
   }
 ;
 
-INJECT NameObjectIdentifier :
-  implements org.eclipse.daanse.mdx.model.api.expression.SymbolLiteral,
-             ObjectIdentifier
-{
-  @Property Quoting quoting = Quoting.UNQUOTED;
-  @Property String name;
-  public Quoting quoting() {return getQuoting();}
-  public String name() {return getName();}
-  public String value() {return getName();}
-}
+INJECT interface NameObjectIdentifier : 
+    extends ObjectIdentifier, 
+            org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier,
+            org.eclipse.daanse.mdx.model.api.expression.SymbolLiteral
 
-NameObjectIdentifier :
- (
-  //parseKeyword {CURRENT_NODE.setName(getTokenImage(0));}
+NameObjectIdentifier#interface :
+  // It seems that some reserved words can act as identifiers under
+  // some considerations, but of course, that is what the [...] is for, no?
+  // This only seems to exist in the Pentaho grammar. REVISIT
+  //parseKeyword 
   //|
-  < ID > {CURRENT_NODE.setName(getTokenImage(0));}
+  < ID > 
   |
-  < ATSIGN > < ID > { CURRENT_NODE.setName("@" + getTokenImage(0)); }
+  // Neither the Microsoft spec the Oracle spec makes any mention of this!  
+  < AT_ID > 
   | 
   < QUOTED_ID >
-  {
-    String name = stripQuotes(getTokenImage(0));
-    CURRENT_NODE.setName(name);
-    CURRENT_NODE.setQuoting(ObjectIdentifier.Quoting.QUOTED);
-  }
- )
 ;
 
 
 INJECT KeyObjectIdentifier :
    import java.util.List;
    import java.util.ArrayList;
-   import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
    implements ObjectIdentifier, org.eclipse.daanse.mdx.model.api.expression.KeyObjectIdentifier
 {
    public List<NameObjectIdentifier> nameObjectIdentifiers() {
@@ -227,38 +254,11 @@ INJECT KeyObjectIdentifier :
 
 // for example '&foo&[1]&bar' in '[x].&foo&[1]&bar.[y]'
 KeyObjectIdentifier :
-  ( AmpId )+
+  ( <AMP_QUOTED_ID> | <AMP_UNQUOTED_ID> )+
 ;
 
 
-AmpId#NameObjectIdentifier :
- (
-  < AMP_QUOTED_ID >
-  {
-    String name = stripQuotes(getTokenImage(0).substring(1));
-    CURRENT_NODE.setName(name);
-    CURRENT_NODE.setQuoting(ObjectIdentifier.Quoting.QUOTED);
-  }
-  |
-  < AMP_UNQUOTED_ID >
-  {
-    CURRENT_NODE.setName(getTokenImage(0).substring(1));
-  }
- )
-;
-
-
-// a keyword that is not a RESERVED_WORD could be used as identifier
-String parseKeyword :
-  (
-    < DIMENSION > | < PROPERTIES >
-  )
-  {
-    return getTokenImage(0);
-  }
-;
-
-INJECT CompoundId : implements org.eclipse.daanse.mdx.model.api.expression.CompoundId
+INJECT CompoundId : implements Expression, org.eclipse.daanse.mdx.model.api.expression.CompoundId
 {
     public CompoundId() {super();}
 
@@ -288,7 +288,7 @@ Expression parseUnaliasedExpression :
   (
     < OR > y = parseTerm5
     {
-      x = new CallExpressionR("OR", Type.TERM_INFIX, List.of(
+      x = new PARSER_CLASS.CallExpressionImpl("OR", Type.TERM_INFIX, List.of(
       x, y
       )
       );
@@ -296,7 +296,7 @@ Expression parseUnaliasedExpression :
     | 
     < XOR > y = parseTerm5
     {
-      x = new CallExpressionR("XOR", Type.TERM_INFIX, List.of(
+      x = new PARSER_CLASS.CallExpressionImpl("XOR", Type.TERM_INFIX, List.of(
       x, y
       )
       );
@@ -305,7 +305,7 @@ Expression parseUnaliasedExpression :
     // range 'm1 : m2' yields set of members
     < COLON > y = parseTerm5
     {
-      x = new CallExpressionR(":", Type.TERM_INFIX, List.of(
+      x = new PARSER_CLASS.CallExpressionImpl(":", Type.TERM_INFIX, List.of(
       x, y
       )
       );
@@ -326,7 +326,7 @@ Expression parseTerm5 :
   (
     < AND > y = parseTerm4
     {
-      x = new CallExpressionR("AND", Type.TERM_INFIX, List.of(
+      x = new PARSER_CLASS.CallExpressionImpl("AND", Type.TERM_INFIX, List.of(
       x, y
       )
       );
@@ -349,7 +349,7 @@ Expression parseTerm4 :
   | 
   < NOT > x = parseTerm4
   {
-    return new CallExpressionR("NOT", Type.TERM_PREFIX, List.of(
+    return new PARSER_CLASS.CallExpressionImpl("NOT", Type.TERM_PREFIX, List.of(
     x
     )
     );
@@ -394,7 +394,7 @@ Expression parseTerm3 :
     )
     y = parseTerm2
     {
-      x = new CallExpressionR(op.getImage(), Type.TERM_INFIX, List.of(
+      x = new PARSER_CLASS.CallExpressionImpl(op.getImage(), Type.TERM_INFIX, List.of(
       x, y
       )
       );
@@ -405,7 +405,7 @@ Expression parseTerm3 :
     SCAN 2 =>
     < IS > < NULL >
     {
-      x = new CallExpressionR("IS NULL", Type.TERM_POSTFIX, List.of(
+      x = new PARSER_CLASS.CallExpressionImpl("IS NULL", Type.TERM_POSTFIX, List.of(
       x
       )
       );
@@ -415,19 +415,19 @@ Expression parseTerm3 :
     SCAN 2 =>
     < IS > y = parseTerm2
     {
-      x = new CallExpressionR("IS", Type.TERM_INFIX, List.of(
+      x = new PARSER_CLASS.CallExpressionImpl("IS", Type.TERM_INFIX, List.of(
       x, y
       )
       );
     }
   | < IS > < EMPTY >
     {
-      x = new CallExpressionR(
+      x = new PARSER_CLASS.CallExpressionImpl(
       "IS EMPTY", Type.TERM_POSTFIX, List.of(x));
     }
   | < MATCHES > y = parseTerm2
     {
-      x = new CallExpressionR("MATCHES", Type.TERM_INFIX, List.of(
+      x = new PARSER_CLASS.CallExpressionImpl("MATCHES", Type.TERM_INFIX, List.of(
       x, y
       )
       );
@@ -435,9 +435,9 @@ Expression parseTerm3 :
   | SCAN 2 =>
     < NOT > < MATCHES > y = parseTerm2
     {
-      x = new CallExpressionR(
+      x = new PARSER_CLASS.CallExpressionImpl(
       "NOT", Type.TERM_PREFIX, List.of(
-      new CallExpressionR(
+      new PARSER_CLASS.CallExpressionImpl(
       "MATCHES", Type.TERM_INFIX, List.of(
       x, y
       )
@@ -447,16 +447,16 @@ Expression parseTerm3 :
     }
   | < IN > y = parseTerm2
     {
-      x = new CallExpressionR("IN", Type.TERM_INFIX, List.of(
+      x = new PARSER_CLASS.CallExpressionImpl("IN", Type.TERM_INFIX, List.of(
       x, y
       )
       );
     }
   | < NOT > < IN > y = parseTerm2
     {
-      x = new CallExpressionR(
+      x = new PARSER_CLASS.CallExpressionImpl(
       "NOT", Type.TERM_PREFIX, List.of(
-      new CallExpressionR(
+      new PARSER_CLASS.CallExpressionImpl(
       "IN", Type.TERM_INFIX, List.of(
       x, y
       )
@@ -480,7 +480,7 @@ Expression parseTerm2 :
   (
     < PLUS > y = parseTerm
     {
-      x = new CallExpressionR("+", Type.TERM_INFIX, List.of(
+      x = new PARSER_CLASS.CallExpressionImpl("+", Type.TERM_INFIX, List.of(
       x, y
       )
       );
@@ -488,14 +488,14 @@ Expression parseTerm2 :
     | 
     < MINUS > y = parseTerm
     {
-      x = new CallExpressionR("-", Type.TERM_INFIX, List.of(
+      x = new PARSER_CLASS.CallExpressionImpl("-", Type.TERM_INFIX, List.of(
       x, y
       )
       );
     }
   | < CONCAT > y = parseTerm
     {
-      x = new CallExpressionR("||", Type.TERM_INFIX, List.of(
+      x = new PARSER_CLASS.CallExpressionImpl("||", Type.TERM_INFIX, List.of(
       x, y
       )
       );
@@ -516,14 +516,14 @@ Expression parseTerm :
   (
     < ASTERISK > y = parseFactor
     {
-      x = new CallExpressionR("*", Type.TERM_INFIX, List.of(
+      x = new PARSER_CLASS.CallExpressionImpl("*", Type.TERM_INFIX, List.of(
       x, y
       )
       );
     }
   | < SOLIDUS > y = parseFactor
     {
-      x = new CallExpressionR("/", Type.TERM_INFIX, List.of(
+      x = new PARSER_CLASS.CallExpressionImpl("/", Type.TERM_INFIX, List.of(
       x, y
       )
       );
@@ -547,21 +547,21 @@ Expression parseFactor :
     }
   | < MINUS > p = PrimaryExpression
     {
-      return new CallExpressionR("-", Type.TERM_PREFIX, List.of(
+      return new PARSER_CLASS.CallExpressionImpl("-", Type.TERM_PREFIX, List.of(
       p
       )
       );
     }
   | < EXISTING > p = PrimaryExpression
     {
-      return new CallExpressionR("Existing", Type.TERM_PREFIX, List.of(
+      return new PARSER_CLASS.CallExpressionImpl("Existing", Type.TERM_PREFIX, List.of(
       p
       )
       );
     }
   ;
 
-  INJECT PrimaryExpression : extends org.eclipse.daanse.mdx.model.api.expression.Expression
+  INJECT PrimaryExpression : extends Expression
 
   PrimaryExpression#interface :
   {
@@ -648,7 +648,7 @@ Expression parseFactor :
     {
       // Whereas ([Sales],[Time]) and () are tuples, ([Sales]) and (5)
       // are just expressions.
-      return new CallExpressionR(
+      return new PARSER_CLASS.CallExpressionImpl(
       "()", Type.PARENTHESES, expressions);
     }
   ;
@@ -671,7 +671,7 @@ Expression parseFactor :
     )
     < RBRACE >
     {
-      return new CallExpressionR(
+      return new PARSER_CLASS.CallExpressionImpl(
       "{}", Type.BRACES, expressions);
     }
   ;
@@ -778,12 +778,12 @@ Expression parseFactor :
     {
       if (match)
       {
-        return new CallExpressionR(
+        return new PARSER_CLASS.CallExpressionImpl(
         "_CaseMatch", Type.TERM_CASE, expressions);
       }
       else
       {
-        return new CallExpressionR(
+        return new PARSER_CLASS.CallExpressionImpl(
         "_CaseTest", Type.TERM_CASE, expressions);
       }
     }

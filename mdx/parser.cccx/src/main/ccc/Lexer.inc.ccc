@@ -397,7 +397,7 @@ INCLUDE JAVA_IDENTIFIER_DEF
  * - https://javacc.github.io/javacc/documentation/bnf.html#identifiers
  */
 
-TOKEN #Identifier :
+TOKEN #IdToken :
   < ID : <JAVA_IDENTIFIER_START> (<JAVA_IDENTIFIER_PART>)* > 
   |
   < QUOTED_ID :
@@ -415,7 +415,38 @@ TOKEN #Identifier :
     "&" [ "a"-"z", "A"-"Z" ]
     ( <JAVA_IDENTIFIER_PART> )*
   >
+  |
+  // Neither the Microsoft spec the Oracle spec makes any mention of this!
+  < AT_ID : "@" <ID> > 
 ;
+
+INJECT IdToken :
+   import static PARSER_PACKAGE.PARSER_CLASS.stripQuotes;
+   implements NameObjectIdentifier
+{
+   private Quoting quoting;
+   private String name;
+
+   public Quoting quoting() {
+       if (quoting == null) {
+          quoting = getImage().charAt(0) == '[' ? Quoting.QUOTED : Quoting.UNQUOTED;
+       }
+       return quoting;
+   }
+
+   public String name() {
+      if (name == null) {
+         String image = getImage();
+         name = quoting() == Quoting.QUOTED  ? stripQuotes(image) : image;
+      }
+      return name;
+   }
+
+   public String value() {
+       return name();
+   }
+
+}   
 
 TOKEN #NumericLiteral :
   < UNSIGNED_INTEGER_LITERAL : ([ "0"-"9" ])+ >
