@@ -20,7 +20,7 @@ import org.eclipse.daanse.mdx.model.api.expression.Expression;
 
 public record CallExpressionR(String name,
                               CallExpression.Type type,
-                              List<Expression> expressions)
+                              List<? extends Expression> expressions)
         implements CallExpression {
 
     public CallExpressionR {

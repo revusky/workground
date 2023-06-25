@@ -18,6 +18,6 @@ import java.util.List;
 import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
 import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier;
 
-public record CompoundIdR(List<ObjectIdentifier> objectIdentifiers) implements CompoundId {
+public record CompoundIdR(List<? extends ObjectIdentifier> objectIdentifiers) implements CompoundId {
 
 }

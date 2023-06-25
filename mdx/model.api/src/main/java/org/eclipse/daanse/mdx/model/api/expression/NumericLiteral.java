@@ -15,7 +15,7 @@ package org.eclipse.daanse.mdx.model.api.expression;
 
 import java.math.BigDecimal;
 
-public non-sealed interface NumericLiteral extends Literal {
+public /* non-sealed */ interface NumericLiteral extends Literal {
     BigDecimal value();
 
 }

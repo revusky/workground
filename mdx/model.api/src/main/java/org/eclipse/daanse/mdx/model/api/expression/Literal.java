@@ -13,6 +13,6 @@
 */
 package org.eclipse.daanse.mdx.model.api.expression;
 
-public sealed interface Literal extends Expression permits NullLiteral, NumericLiteral, StringLiteral, SymbolLiteral {
+public /*sealed*/ interface Literal extends Expression /* permits NullLiteral, NumericLiteral, StringLiteral, SymbolLiteral*/ {
 
 }

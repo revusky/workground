@@ -21,9 +21,9 @@ NODE_PACKAGE = org.eclipse.daanse.mdx.parser.cccx.tree;
 TABS_TO_SPACES = 4;
 ENSURE_FINAL_EOL;
 SMART_NODE_CREATION=false;
-COPYRIGHT_BLURB="\n*\n* Copyright (c) 2023 Contributors to the Eclipse Foundation.\n*\n* This program and the accompanying materials are made\n* available under the terms of the Eclipse Public License 2.0\n* which is available at https://www.eclipse.org/legal/epl-2.0/\n*\n* SPDX-License-Identifier: EPL-2.0\n*\n* Contributors: see corresponding .ccc file\n";
-#if false
-We'll be able to use this instead in RC3
+//COPYRIGHT_BLURB="\n*\n* Copyright (c) 2023 Contributors to the Eclipse Foundation.\n*\n* This program and the accompanying materials are made\n* available under the terms of the Eclipse Public License 2.0\n* which is available at https://www.eclipse.org/legal/epl-2.0/\n*\n* SPDX-License-Identifier: EPL-2.0\n*\n* Contributors: see corresponding .ccc file\n";
+#if true
+// We'll be able to use this instead in RC3
 COPYRIGHT_BLURB="""
      *
      * Copyright (c) 2023 Contributors to the Eclipse Foundation.

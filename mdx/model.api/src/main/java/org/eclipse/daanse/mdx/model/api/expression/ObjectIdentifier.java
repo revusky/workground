@@ -13,7 +13,7 @@
 */
 package org.eclipse.daanse.mdx.model.api.expression;
 
-public sealed interface ObjectIdentifier extends Expression permits KeyObjectIdentifier, NameObjectIdentifier {
+public /*sealed*/ interface ObjectIdentifier extends Expression /*permits KeyObjectIdentifier, NameObjectIdentifier*/ {
 
     public enum Quoting {
 

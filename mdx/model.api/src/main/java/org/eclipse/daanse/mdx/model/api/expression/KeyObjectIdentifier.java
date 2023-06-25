@@ -15,7 +15,7 @@ package org.eclipse.daanse.mdx.model.api.expression;
 
 import java.util.List;
 
-public non-sealed interface KeyObjectIdentifier extends ObjectIdentifier {
+public /*non-sealed*/ interface KeyObjectIdentifier extends ObjectIdentifier {
 
     List<? extends NameObjectIdentifier> nameObjectIdentifiers();
 }

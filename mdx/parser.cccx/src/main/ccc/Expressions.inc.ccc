@@ -18,7 +18,6 @@
 INJECT PARSER_CLASS :
   import org.eclipse.daanse.mdx.model.api.expression.Expression;
   import org.eclipse.daanse.mdx.model.api.expression.CallExpression.Type;
-  import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier;
   import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
   import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
 {
@@ -54,8 +53,8 @@ INJECT PARSER_CLASS :
 				break;
 			}
 			if (left instanceof CompoundId compoundIdLeft && !call) {
-				List<ObjectIdentifier> newObjectIdentifiers = new ArrayList<>(
-						(compoundIdLeft).objectIdentifiers());
+				List<org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier> newObjectIdentifiers = new ArrayList<>();
+        newObjectIdentifiers.addAll(compoundIdLeft.objectIdentifiers());
 				newObjectIdentifiers.add(objectIdentifier);
 				return new CompoundIdR(newObjectIdentifiers);
 			} else if (left == null) {
@@ -77,7 +76,7 @@ Expression Expression#parseExpression :
   expression = parseUnaliasedExpression
   (
     < AS > 
-    objectIdentifier = parseIdentifier
+    objectIdentifier = ObjectIdentifier
     {
       CompoundIdR compoundId = new CompoundIdR(List.of(objectIdentifier));
       expression = new CallExpressionR("AS", Type.TERM_INFIX, List.of(
@@ -164,8 +163,9 @@ Expression parseExpressionEof :
   }
 ;
 
+INJECT ObjectIdentifier : extends org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier
 
-ObjectIdentifier parseIdentifier#void :
+ObjectIdentifier ObjectIdentifier#interface :
 {
   ObjectIdentifier objectIdentifier;
 }
@@ -181,7 +181,7 @@ ObjectIdentifier parseIdentifier#void :
 
 INJECT NameObjectIdentifier :
   implements org.eclipse.daanse.mdx.model.api.expression.SymbolLiteral,
-             org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier
+             ObjectIdentifier
 {
   @Property Quoting quoting = Quoting.UNQUOTED;
   @Property String name;
@@ -212,7 +212,7 @@ INJECT KeyObjectIdentifier :
    import java.util.List;
    import java.util.ArrayList;
    import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
-   implements org.eclipse.daanse.mdx.model.api.expression.KeyObjectIdentifier
+   implements ObjectIdentifier, org.eclipse.daanse.mdx.model.api.expression.KeyObjectIdentifier
 {
    public List<NameObjectIdentifier> nameObjectIdentifiers() {
      return childrenOfType(NameObjectIdentifier.class);
@@ -269,9 +269,9 @@ INJECT CompoundId :
 }  
 
 CompoundId :
-  parseIdentifier
+  ObjectIdentifier
   (
-    < DOT > parseIdentifier
+    < DOT > ObjectIdentifier
   )*
 ;
 
@@ -575,7 +575,7 @@ Expression parseFactor :
     ObjectIdentifier objectIdentifier;
     List < Expression > argList = null;
   }
-    objectIdentifier = parseIdentifier
+    objectIdentifier = ObjectIdentifier
     (
       < LPAREN >
       (
@@ -588,7 +588,7 @@ Expression parseFactor :
     }
   ;
 
-  INJECT Literal : extends AtomicExpression
+  INJECT interface Literal : extends AtomicExpression, org.eclipse.daanse.mdx.model.api.expression.Literal
 
   Literal#interface :
     <STRING_LITERAL>
@@ -788,7 +788,7 @@ Expression parseFactor :
   INJECT FormulaExpression : implements org.eclipse.daanse.mdx.model.api.expression.FormulaExpression;
 
   FormulaExpression parseFormulaExpression#FormulaExpression :
-    parseIdentifier < EQ > parseIdentifier
+    ObjectIdentifier < EQ > ObjectIdentifier
     {
       return CURRENT_NODE;
     }
@@ -809,7 +809,7 @@ Expression parseFactor :
 }
 
 MemberPropertyDefinition :
-  parseIdentifier 
+  ObjectIdentifier 
   < EQ > 
   Expression
 ;
