@@ -19,7 +19,6 @@ INJECT PARSER_CLASS :
   import org.eclipse.daanse.mdx.model.api.expression.Expression;
   import org.eclipse.daanse.mdx.model.api.expression.CallExpression.Type;
   import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
-  import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
 {
 	public static Expression createCall(Expression left, ObjectIdentifier objectIdentifier,
 			List<Expression> expressions) {
@@ -52,13 +51,15 @@ INJECT PARSER_CLASS :
 				type = Type.PROPERTY_AMPERS_AND_QUOTED;
 				break;
 			}
-			if (left instanceof CompoundId compoundIdLeft && !call) {
-				List<org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier> newObjectIdentifiers = new ArrayList<>();
-        newObjectIdentifiers.addAll(compoundIdLeft.objectIdentifiers());
-				newObjectIdentifiers.add(objectIdentifier);
-				return new CompoundIdR(newObjectIdentifiers);
+			if (!call && left instanceof CompoundId compoundIdLeft) {
+        CompoundId result = new CompoundId();
+        for (ObjectIdentifier oi : compoundIdLeft.objectIdentifiers()) {
+           result.addChild(oi);
+        }
+        result.addChild((Node) objectIdentifier);
+        return result;
 			} else if (left == null) {
-				return new CompoundIdR(List.of(objectIdentifier));
+        return new CompoundId(objectIdentifier);
 			} else {
 				return new CallExpressionR(name, type, List.of(left));
 			}
@@ -78,7 +79,7 @@ Expression Expression#parseExpression :
     < AS > 
     objectIdentifier = ObjectIdentifier
     {
-      CompoundIdR compoundId = new CompoundIdR(List.of(objectIdentifier));
+      CompoundId compoundId = new CompoundId(objectIdentifier);
       expression = new CallExpressionR("AS", Type.TERM_INFIX, List.of(
       expression, compoundId
       )
@@ -257,13 +258,16 @@ String parseKeyword :
   }
 ;
 
-INJECT CompoundId :
-  import java.util.List;
-  import java.util.ArrayList;
-  import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier;
-  implements org.eclipse.daanse.mdx.model.api.expression.CompoundId
+INJECT CompoundId : implements org.eclipse.daanse.mdx.model.api.expression.CompoundId
 {
-    public List<ObjectIdentifier> objectIdentifiers() {
+    public CompoundId() {super();}
+
+    public CompoundId(ObjectIdentifier id) {
+      super();
+      addChild(id);
+    }
+
+    public java.util.List<ObjectIdentifier> objectIdentifiers() {
        return childrenOfType(ObjectIdentifier.class);
     }
 }  
