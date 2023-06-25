@@ -13,6 +13,6 @@
 */
 package org.eclipse.daanse.mdx.model.api.select;
 
-public non-sealed interface CreateCellCalculationBodyClause extends SelectWithClause {
+public /*non-sealed*/ interface CreateCellCalculationBodyClause extends SelectWithClause {
 
 }

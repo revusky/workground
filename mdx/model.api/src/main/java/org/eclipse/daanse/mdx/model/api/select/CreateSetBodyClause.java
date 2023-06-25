@@ -16,7 +16,7 @@ package org.eclipse.daanse.mdx.model.api.select;
 import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
 import org.eclipse.daanse.mdx.model.api.expression.Expression;
 
-public non-sealed interface CreateSetBodyClause extends SelectWithClause {
+public /*non-sealed*/ interface CreateSetBodyClause extends SelectWithClause {
 
     CompoundId compoundId();
 

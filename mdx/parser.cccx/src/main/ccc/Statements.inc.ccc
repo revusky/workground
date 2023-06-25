@@ -398,8 +398,6 @@ INJECT SelectStatement :
    import java.util.List;
    import java.util.Optional;
    import org.eclipse.daanse.mdx.model.api.select.SelectWithClause;
-   import org.eclipse.daanse.mdx.model.api.select.SelectQueryClause;
-   import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClause;
    import org.eclipse.daanse.mdx.model.api.select.SelectSlicerAxisClause;
    import org.eclipse.daanse.mdx.model.api.select.SelectCellPropertyListClause;
    implements org.eclipse.daanse.mdx.model.api.SelectStatement;
@@ -453,7 +451,6 @@ INJECT SelectQueryClause : extends org.eclipse.daanse.mdx.model.api.select.Selec
 
 INJECT SelectSubcubeClause :
    extends org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClause;
-{}
 
 SelectSubcubeClause#interface :
   SelectSubcubeClauseName
@@ -476,7 +473,7 @@ SelectSubcubeClauseName SelectSubcubeClauseName :
   }
 ;
 
-INJECT MeasureBodyClause : implements org.eclipse.daanse.mdx.model.api.select.MeasureBodyClause;
+INJECT MeasureBodyClause : implements SelectWithClause, org.eclipse.daanse.mdx.model.api.select.MeasureBodyClause;
 
 // https://learn.microsoft.com/en-us/analysis-services/multidimensional-models/mdx/mdx-building-measures?view=asallproducts-allversions
 MeasureBodyClause :
@@ -484,8 +481,11 @@ MeasureBodyClause :
 ;
 
 
+INJECT SelectWithClause : extends org.eclipse.daanse.mdx.model.api.select.SelectWithClause
+
+
 // https://docs.oracle.com/cd/E57185_01/ESBTR/mdx_grammar_rules.html
-SelectWithClause#void :
+SelectWithClause#interface :
   <CELL> <CALCULATION> CreateCellCalculationBodyClause
   | 
   ("CALCULATED")? < MEMBER > CreateMemberBodyClause
@@ -505,7 +505,8 @@ INJECT ReturnItem :
 
 ReturnItem : CompoundId ;
 
-INJECT CreateCellCalculationBodyClause : implements org.eclipse.daanse.mdx.model.api.select.CreateCellCalculationBodyClause;
+INJECT CreateCellCalculationBodyClause : 
+   implements SelectWithClause, org.eclipse.daanse.mdx.model.api.select.CreateCellCalculationBodyClause
 
 //https://learn.microsoft.com/en-us/sql/mdx/mdx-data-definition-create-cell-calculation?view=sql-server-ver16
 CreateCellCalculationBodyClause :
@@ -525,11 +526,7 @@ List<ReturnItem> parseReturnItems#ReturnItems :
 ;
 
 INJECT CreateMemberBodyClause :
-  import java.util.List;
-  import java.util.ArrayList;
-  import org.eclipse.daanse.mdx.model.api.expression.Expression;
-  import org.eclipse.daanse.mdx.model.api.select.MemberPropertyDefinition;
-  implements org.eclipse.daanse.mdx.model.api.select.CreateMemberBodyClause
+  implements SelectWithClause, org.eclipse.daanse.mdx.model.api.select.CreateMemberBodyClause
 {
   public CompoundId compoundId() {
     return (CompoundId) getChild(0);
@@ -539,7 +536,7 @@ INJECT CreateMemberBodyClause :
      return (Expression) getChild(2);
   }
 
-  public List<MemberPropertyDefinition> memberPropertyDefinitions() {
+  public java.util.List<MemberPropertyDefinition> memberPropertyDefinitions() {
      return childrenOfType(MemberPropertyDefinition.class);
   }
 }  
