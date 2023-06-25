@@ -1536,14 +1536,7 @@ SelectQueryAxisClause parseSelectQueryAxisClause :
       < RPAREN >
     )
     {
-      if (n < 0)
-      {
-        throw new IllegalArgumentException("Only axis numbers >= 0 allowed.");
-      }
-      else
-      {
         axis = AxisR.createUnnamed(n);
-      }
     }
   |
     (

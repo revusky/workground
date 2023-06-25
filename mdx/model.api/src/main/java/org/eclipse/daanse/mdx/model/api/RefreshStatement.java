@@ -15,7 +15,7 @@ package org.eclipse.daanse.mdx.model.api;
 
 import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
 
-public non-sealed interface RefreshStatement extends MdxStatement {
+public /*non-sealed*/ interface RefreshStatement extends MdxStatement {
 
     NameObjectIdentifier cubeName();
 }

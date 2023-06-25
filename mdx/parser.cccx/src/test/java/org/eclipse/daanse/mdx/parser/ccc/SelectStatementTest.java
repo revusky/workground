@@ -131,7 +131,7 @@ class SelectStatementTest {
             .isInstanceOf(CallExpression.class);
         checkAxis(selectQueryAxesClause.selectQueryAxisClauses().get(0).axis(), 0, true);
         assertThat(selectQueryAxesClause.selectQueryAxisClauses().get(0).selectDimensionPropertyListClause().properties()).hasSize(1);
-        List<ObjectIdentifier> objectIdentifiers =
+        List<? extends ObjectIdentifier> objectIdentifiers =
             selectQueryAxesClause.selectQueryAxisClauses().get(0).selectDimensionPropertyListClause().properties().get(0).objectIdentifiers();
         assertThat(objectIdentifiers).hasSize(4);
         checkNameObjectIdentifiers(objectIdentifiers, 0, "Store", ObjectIdentifier.Quoting.QUOTED);

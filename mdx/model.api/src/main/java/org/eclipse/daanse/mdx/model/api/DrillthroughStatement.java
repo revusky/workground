@@ -26,7 +26,7 @@ import java.util.Optional;
  * ]
  * [,Set_of_Attributes_and_Measures ...]
  */
-public non-sealed interface DrillthroughStatement extends MdxStatement {
+public /*non-sealed*/ interface DrillthroughStatement extends MdxStatement {
 
     Optional<Integer> maxRows();
 

@@ -13,6 +13,6 @@
 */
 package org.eclipse.daanse.mdx.model.api.select;
 
-public sealed interface SelectSubcubeClause permits SelectSubcubeClauseName, SelectSubcubeClauseStatement {
+public /*sealed*/ interface SelectSubcubeClause /*permits SelectSubcubeClauseName, SelectSubcubeClauseStatement*/ {
 
 }

@@ -15,6 +15,6 @@ package org.eclipse.daanse.mdx.model.api.select;
 
 import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
 
-public non-sealed interface SelectSubcubeClauseName extends SelectSubcubeClause {
+public /*non-sealed*/ interface SelectSubcubeClauseName extends SelectSubcubeClause {
     NameObjectIdentifier cubeName();
 }

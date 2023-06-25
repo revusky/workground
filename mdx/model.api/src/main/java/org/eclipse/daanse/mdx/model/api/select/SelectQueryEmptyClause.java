@@ -13,6 +13,6 @@
 */
 package org.eclipse.daanse.mdx.model.api.select;
 
-public non-sealed interface SelectQueryEmptyClause extends SelectQueryClause {
+public /*non-sealed*/ interface SelectQueryEmptyClause extends SelectQueryClause {
 
 }

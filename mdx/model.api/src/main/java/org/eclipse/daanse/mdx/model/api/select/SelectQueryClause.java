@@ -13,6 +13,6 @@
 */
 package org.eclipse.daanse.mdx.model.api.select;
 
-public sealed interface SelectQueryClause permits SelectQueryAsteriskClause, SelectQueryAxesClause, SelectQueryEmptyClause {
+public /*sealed*/ interface SelectQueryClause /*permits SelectQueryAsteriskClause, SelectQueryAxesClause, SelectQueryEmptyClause*/ {
 
 }

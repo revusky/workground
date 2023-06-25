@@ -19,7 +19,7 @@ import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
 
 import java.util.List;
 
-public non-sealed interface DMVStatement extends MdxStatement {
+public /*non-sealed*/ interface DMVStatement extends MdxStatement {
 
     List<? extends CompoundId> columns();
 

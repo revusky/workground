@@ -15,7 +15,7 @@ package org.eclipse.daanse.mdx.model.api.select;
 
 import java.util.Optional;
 
-public non-sealed interface SelectSubcubeClauseStatement extends SelectSubcubeClause {
+public /*non-sealed*/ interface SelectSubcubeClauseStatement extends SelectSubcubeClause {
 
     SelectQueryClause selectQueryClause();
 

@@ -16,7 +16,7 @@ class ReturnItemTest {
 
 	@Test
 	void test() throws MdxParserException {
-		List<ReturnItem> clauseList = new MdxParserWrapper("[a].[b]").parseReturnItems();
+		List<? extends ReturnItem> clauseList = new MdxParserWrapper("[a].[b]").parseReturnItems();
 		assertThat(clauseList).isNotNull().hasSize(1);
 		CompoundId compoundId = clauseList.get(0).compoundId();
 		assertThat(compoundId.objectIdentifiers()).hasSize(2);
