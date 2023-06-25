@@ -59,8 +59,6 @@ INJECT MdxStatement : extends org.eclipse.daanse.mdx.model.api.MdxStatement;
 INJECT DrillthroughStatement :
    import java.util.List;
    import java.util.Optional;
-   import org.eclipse.daanse.mdx.model.api.ReturnItem;
-   import org.eclipse.daanse.mdx.model.api.SelectStatement;
    implements MdxStatement, org.eclipse.daanse.mdx.model.api.DrillthroughStatement
 {
    public Optional<Integer> maxRows() {
@@ -104,7 +102,6 @@ DrillthroughStatement :
 ;
 
 INJECT ExplainStatement :
-   import org.eclipse.daanse.mdx.model.api.MdxStatement;
    implements org.eclipse.daanse.mdx.model.api.ExplainStatement
 {
     public MdxStatement mdxStatement() {
@@ -122,11 +119,9 @@ ExplainStatement :
 ;
 
 INJECT SelectDimensionPropertyListClause :
-   import java.util.List;
-   import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
    implements org.eclipse.daanse.mdx.model.api.select.SelectDimensionPropertyListClause
 {
-  public List<CompoundId> properties() {
+  public java.util.List<CompoundId> properties() {
      return childrenOfType(CompoundId.class);
   }
 }
@@ -142,7 +137,6 @@ SelectDimensionPropertyListClause :
 ;
 
 INJECT RefreshStatement :
-   import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
    implements org.eclipse.daanse.mdx.model.api.RefreshStatement;
 {
    public NameObjectIdentifier cubeName() {
@@ -157,13 +151,9 @@ RefreshStatement :
 ;
 
 INJECT DMVStatement :
-   import java.util.List;
-   import org.eclipse.daanse.mdx.model.api.expression.NameObjectIdentifier;
-   import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
-   import org.eclipse.daanse.mdx.model.api.expression.Expression;
    implements org.eclipse.daanse.mdx.model.api.DMVStatement;
 {
-    public List<CompoundId> columns() {
+    public java.util.List<CompoundId> columns() {
         return childrenOfType(CompoundId.class);
     }
 
@@ -287,8 +277,6 @@ Axis :
 ;
 
 INJECT CreateSetBodyClause :
-  import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
-  import org.eclipse.daanse.mdx.model.api.expression.Expression;
   implements org.eclipse.daanse.mdx.model.api.select.CreateSetBodyClause
 {
    public CompoundId compoundId() {
@@ -305,8 +293,6 @@ CreateSetBodyClause :
 ;
 
 INJECT SelectCellPropertyListClause :
-   import java.util.List;
-   import java.util.ArrayList;
    import java.util.stream.Collectors;
    implements org.eclipse.daanse.mdx.model.api.select.SelectCellPropertyListClause
 {
@@ -314,7 +300,7 @@ INJECT SelectCellPropertyListClause :
       return getChild(0).getType() == CELL;
    }
 
-   public List<String> properties() {
+   public java.util.List<String> properties() {
        return childrenOfType(ID).stream().map(n->n.getImage()).collect(Collectors.toList());
    }
 }
@@ -332,7 +318,6 @@ SelectCellPropertyListClause SelectCellPropertyListClause# :
 ;
 
 INJECT SelectSlicerAxisClause :
-   import org.eclipse.daanse.mdx.model.api.expression.Expression;
    implements org.eclipse.daanse.mdx.model.api.select.SelectSlicerAxisClause;
 {
     public Expression expression() {
@@ -347,11 +332,9 @@ SelectSlicerAxisClause :
 
 
 INJECT SelectQueryAxesClause :
-   import java.util.List;
-   import org.eclipse.daanse.mdx.model.api.select.SelectQueryAxisClause;
    implements SelectQueryClause, org.eclipse.daanse.mdx.model.api.select.SelectQueryAxesClause
 {
-   public List<SelectQueryAxisClause> selectQueryAxisClauses() {
+   public java.util.List<SelectQueryAxisClause> selectQueryAxisClauses() {
       return childrenOfType(SelectQueryAxisClause.class);
    }
 }   
@@ -367,7 +350,6 @@ SelectQueryAxesClause :
 
 INJECT SelectSubcubeClauseStatement :
   import java.util.Optional;
-  //import org.eclipse.daanse.mdx.model.api.select.SelectQueryClause;
   import org.eclipse.daanse.mdx.model.api.select.SelectSlicerAxisClause;
   implements SelectSubcubeClause, org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseStatement
 {
@@ -514,7 +496,6 @@ SelectWithClause#void :
 ;
 
 INJECT ReturnItem :
-  import org.eclipse.daanse.mdx.model.api.expression.CompoundId;
   implements org.eclipse.daanse.mdx.model.api.ReturnItem
 {
    public CompoundId compoundId() {
