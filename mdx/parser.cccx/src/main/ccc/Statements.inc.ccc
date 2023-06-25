@@ -513,9 +513,9 @@ CreateCellCalculationBodyClause :
  <NOT><NOT><NOT><NOT><NOT><NOT><NOT>
 ;
 
-// This is not used in the parser. I just re-added this methods
+// This is not used in the parser. I just re-added this method
 // so that a pre-existing test still compiles
-List<ReturnItem> parseReturnItems#ReturnItems :
+List<ReturnItem> parseReturnItems : 
    {List<ReturnItem> result = new ArrayList<>();} 
    ReturnItem
    {result.add((ReturnItem) peekNode());}

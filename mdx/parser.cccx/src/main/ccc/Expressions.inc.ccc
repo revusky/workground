@@ -541,18 +541,18 @@ Expression parseFactor :
     {
       return p;
     }
-  | < PLUS > p = PrimaryExpression
+    | < PLUS > p = PrimaryExpression
     {
       return p;
     }
-  | < MINUS > p = PrimaryExpression
+    | < MINUS > p = PrimaryExpression
     {
       return new PARSER_CLASS.CallExpressionImpl("-", Type.TERM_PREFIX, List.of(
       p
       )
       );
     }
-  | < EXISTING > p = PrimaryExpression
+    | < EXISTING > p = PrimaryExpression
     {
       return new PARSER_CLASS.CallExpressionImpl("Existing", Type.TERM_PREFIX, List.of(
       p
