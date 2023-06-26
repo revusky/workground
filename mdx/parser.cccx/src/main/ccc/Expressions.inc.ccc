@@ -331,6 +331,14 @@ Expression parseTerm4 :
   }
 ;
 
+INJECT RelationalExpression :
+   import java.util.List;
+   implements Expression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
+{
+   
+     
+}    
+
 
 Expression parseTerm3 :
 {
@@ -340,7 +348,6 @@ Expression parseTerm3 :
 }
   AdditiveExpression {x = (Expression) peekNode();}
   (
-    // e.g. "1 < 5"
     (
       < EQ >
       {
@@ -450,27 +457,10 @@ Expression parseTerm3 :
   }
 ;
 
-INJECT AdditiveExpression :
-    import java.util.List;
-    implements Expression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
-{
-    public String name() {
-       return getChild(1).getImage();
-    }
-
-    public Type type() {
-       return Type.TERM_INFIX; 
-    }
-
-    public List<Expression> expressions() {
-        return List.of((Expression) getChild(0), (Expression) getChild(2));
-    }
-}
-
-
-AdditiveExpression#(>1) :
+AdditiveExpression#void :
   MultiplicativeExpression
   (
+   (
     (
      <PLUS>
      |
@@ -480,10 +470,11 @@ AdditiveExpression#(>1) :
      <CONCAT>
     )
     MultiplicativeExpression
+   )#BinaryExpression(+1)
   )*
 ;
 
-INJECT MultiplicativeExpression :
+INJECT BinaryExpression :
     import java.util.List;
     implements Expression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
 {
@@ -500,11 +491,13 @@ INJECT MultiplicativeExpression :
     }
 }    
 
-MultiplicativeExpression#(>1) :
+MultiplicativeExpression#void :
   UnaryExpression
   (
-    (<ASTERISK>|<SOLIDUS>) 
-    UnaryExpression
+    (
+      (<ASTERISK>|<SOLIDUS>) 
+      UnaryExpression 
+    )#BinaryExpression(+1)
   )*
 ;
 
@@ -523,7 +516,6 @@ INJECT UnaryExpression :
     public List<Expression> expressions() {
         return List.of((Expression) getChild(1));
     }
-
 }
 
 UnaryExpression#(>1) :
