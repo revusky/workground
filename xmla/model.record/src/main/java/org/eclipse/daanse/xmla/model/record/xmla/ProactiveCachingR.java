@@ -13,9 +13,8 @@
  */
 package org.eclipse.daanse.xmla.model.record.xmla;
 
+import java.time.Duration;
 import java.util.Optional;
-
-import javax.xml.datatype.Duration;
 
 import org.eclipse.daanse.xmla.api.xmla.ProactiveCaching;
 import org.eclipse.daanse.xmla.api.xmla.ProactiveCachingBinding;

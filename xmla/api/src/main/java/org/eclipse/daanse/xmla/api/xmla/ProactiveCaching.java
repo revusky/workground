@@ -13,9 +13,8 @@
  */
 package org.eclipse.daanse.xmla.api.xmla;
 
+import java.time.Duration;
 import java.util.Optional;
-
-import javax.xml.datatype.Duration;
 
 /**
  * The ProactiveCaching complex type represents proactive caching settings for an object.

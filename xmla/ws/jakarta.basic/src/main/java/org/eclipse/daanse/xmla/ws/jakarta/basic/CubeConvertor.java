@@ -516,10 +516,10 @@ public class CubeConvertor {
 			return new ProactiveCachingR(Optional.ofNullable(proactiveCaching.getOnlineMode()),
 					Optional.ofNullable(proactiveCaching.getAggregationStorage()),
 					Optional.ofNullable(convertProactiveCachingBinding(proactiveCaching.getSource())),
-					Optional.ofNullable(proactiveCaching.getSilenceInterval()),
-					Optional.ofNullable(proactiveCaching.getLatency()),
-					Optional.ofNullable(proactiveCaching.getSilenceOverrideInterval()),
-					Optional.ofNullable(proactiveCaching.getForceRebuildInterval()),
+					Optional.ofNullable(convertDuration(proactiveCaching.getSilenceInterval())),
+					Optional.ofNullable(convertDuration(proactiveCaching.getLatency())),
+					Optional.ofNullable(convertDuration(proactiveCaching.getSilenceOverrideInterval())),
+					Optional.ofNullable(convertDuration(proactiveCaching.getForceRebuildInterval())),
 					Optional.ofNullable(proactiveCaching.getEnabled()));
 		}
 		return null;

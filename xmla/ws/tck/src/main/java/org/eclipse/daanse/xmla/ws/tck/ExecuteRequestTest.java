@@ -34,9 +34,7 @@ import org.osgi.test.common.annotation.Property;
 import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 import org.osgi.test.junit5.cm.ConfigurationExtension;
 
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.Duration;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 
@@ -204,9 +202,9 @@ class ExecuteRequestTest {
     }
 
     @Test
-    void testAlter(@InjectService XmlaService xmlaService) throws DatatypeConfigurationException {
+    void testAlter(@InjectService XmlaService xmlaService) {
         ArgumentCaptor<AlterRequest> captor = ArgumentCaptor.forClass(AlterRequest.class);
-        Duration duration = DatatypeFactory.newInstance().newDuration("-PT1S");
+        Duration duration = Duration.parse("-PT1S");
 
         SOAPUtil.callSoapWebService(Constants.SOAP_ENDPOINT_URL, Optional.of(Constants.SOAP_ACTION_EXECUTE),
             SOAPUtil.envelop(ALTER_REQUEST));

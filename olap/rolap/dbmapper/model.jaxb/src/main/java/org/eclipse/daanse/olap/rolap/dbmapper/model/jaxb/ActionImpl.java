@@ -31,7 +31,7 @@ public class ActionImpl implements Action {
 
     @XmlAttribute(name = "name", required = true)
     protected String name;
-    @XmlAttribute(name = "name")
+    @XmlAttribute(name = "caption")
     protected String caption;
     @XmlAttribute(name = "description")
     protected String description;

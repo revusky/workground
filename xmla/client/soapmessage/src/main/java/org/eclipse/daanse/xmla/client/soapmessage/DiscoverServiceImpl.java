@@ -114,10 +114,6 @@ import static org.eclipse.daanse.xmla.api.discover.discover.datasources.Discover
 import static org.eclipse.daanse.xmla.api.discover.discover.datasources.DiscoverDataSourcesRestrictions.RESTRICTIONS_PROVIDER_TYPE;
 import static org.eclipse.daanse.xmla.api.discover.discover.datasources.DiscoverDataSourcesRestrictions.RESTRICTIONS_URL;
 import static org.eclipse.daanse.xmla.api.discover.mdschema.kpis.MdSchemaKpisRestrictions.RESTRICTIONS_KPI_NAME;
-import static org.eclipse.daanse.xmla.client.soapmessage.Constants.AXIS_FORMAT;
-import static org.eclipse.daanse.xmla.client.soapmessage.Constants.CATALOG;
-import static org.eclipse.daanse.xmla.client.soapmessage.Constants.CONTENT;
-import static org.eclipse.daanse.xmla.client.soapmessage.Constants.DATA_SOURCE_INFO;
 import static org.eclipse.daanse.xmla.client.soapmessage.Constants.DBSCHEMA_CATALOGS;
 import static org.eclipse.daanse.xmla.client.soapmessage.Constants.DBSCHEMA_COLUMNS;
 import static org.eclipse.daanse.xmla.client.soapmessage.Constants.DBSCHEMA_PROVIDER_TYPES;
@@ -133,8 +129,6 @@ import static org.eclipse.daanse.xmla.client.soapmessage.Constants.DISCOVER_LITE
 import static org.eclipse.daanse.xmla.client.soapmessage.Constants.DISCOVER_PROPERTIES;
 import static org.eclipse.daanse.xmla.client.soapmessage.Constants.DISCOVER_SCHEMA_ROWSETS;
 import static org.eclipse.daanse.xmla.client.soapmessage.Constants.DISCOVER_XML_METADATA;
-import static org.eclipse.daanse.xmla.client.soapmessage.Constants.FORMAT;
-import static org.eclipse.daanse.xmla.client.soapmessage.Constants.LOCALE_IDENTIFIER;
 import static org.eclipse.daanse.xmla.client.soapmessage.Constants.MDSCHEMA_ACTIONS;
 import static org.eclipse.daanse.xmla.client.soapmessage.Constants.MDSCHEMA_CUBES;
 import static org.eclipse.daanse.xmla.client.soapmessage.Constants.MDSCHEMA_DIMENSIONS;
@@ -254,7 +248,7 @@ import static org.eclipse.daanse.xmla.client.soapmessage.Convertor.convertToMdSc
 import static org.eclipse.daanse.xmla.client.soapmessage.Convertor.convertToMdSchemaPropertiesResponseRow;
 import static org.eclipse.daanse.xmla.client.soapmessage.Convertor.convertToMdSchemaSetsResponseRow;
 
-public class DiscoverServiceImpl implements DiscoverService {
+public class DiscoverServiceImpl extends AbstractService implements DiscoverService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DiscoverServiceImpl.class);
     private SoapClient soapClient;
@@ -1420,21 +1414,4 @@ public class DiscoverServiceImpl implements DiscoverService {
         };
     }
 
-    private void setPropertyList(SOAPElement propertyList, Properties properties) {
-        properties.localeIdentifier().ifPresent(v -> addChildElement(propertyList, LOCALE_IDENTIFIER, v.toString()));
-        properties.dataSourceInfo().ifPresent(v -> addChildElement(propertyList, DATA_SOURCE_INFO, v));
-        properties.content().ifPresent(v -> addChildElement(propertyList, CONTENT, v.getValue()));
-        properties.format().ifPresent(v -> addChildElement(propertyList, FORMAT, v.getValue()));
-        properties.catalog().ifPresent(v -> addChildElement(propertyList, CATALOG, v));
-        properties.axisFormat().ifPresent(v -> addChildElement(propertyList, AXIS_FORMAT, v.getValue()));
-    }
-
-    private void addChildElement(SOAPElement element, String childElementName, String value) {
-        try {
-            element.addChildElement(childElementName).setTextContent(value);
-        } catch (SOAPException e) {
-            LOGGER.error("addChildElement {} error", childElementName);
-            throw new SoapClientException("addChildElement error", e);
-        }
-    }
 }
