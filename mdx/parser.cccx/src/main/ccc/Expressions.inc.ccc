@@ -107,35 +107,23 @@ INJECT PARSER_CLASS :
 INJECT Expression : extends org.eclipse.daanse.mdx.model.api.expression.Expression
 
 Expression Expression#interface :
-{
-  Expression expression;
-  ObjectIdentifier objectIdentifier;
-}
-  expression = parseUnaliasedExpression
+  OrExpression
   (
-    < AS > 
-    objectIdentifier = ObjectIdentifier
-    {
-      CompoundId compoundId = new CompoundId(objectIdentifier);
-      expression = new PARSER_CLASS.CallExpressionImpl("AS", Type.TERM_INFIX, List.of(
-      expression, compoundId
-      )
-      );
-    }
+    (
+      < AS > 
+      ObjectIdentifier
+    )#BinaryExpression(+1)
   )*
   {
-    return expression;
+    return (Expression) peekNode();
   }
 ;
 
 
 Expression parseExpressionOrEmpty :
-{
-  Expression expression;
-}
-  expression = Expression
+  Expression
   {
-    return expression;
+    return (Expression) peekNode();
   }
   | /* empty */
   {
@@ -146,18 +134,17 @@ Expression parseExpressionOrEmpty :
 // List of expressions, none of which may be empty.
 List < Expression > expList :
 {
-  Expression expression;
   List < Expression > list = new LinkedList<>();
 }
-  expression = Expression
+  Expression
   {
-    list.add(expression);
+    list.add((Expression) peekNode());
   }
   (
     < COMMA >
-    expression = Expression
+    Expression
     {
-      list.add(expression);
+      list.add((Expression) peekNode());
     }
   )*
   {
@@ -170,7 +157,8 @@ Expression parseExpressionEof :
 {
   Expression expression;
 }
-  expression = Expression < EOF >
+  Expression {expression=(Expression) peekNode();}
+  < EOF >
   {
     return expression;
   } 
@@ -254,207 +242,96 @@ CompoundId :
   )*
 ;
 
-Expression parseUnaliasedExpression :
-{
-  Expression x;
-  Expression y;
-}
-  x = parseTerm5
+OrExpression# :
+  AndExpression
   (
-    < OR > y = parseTerm5
-    {
-      x = new PARSER_CLASS.CallExpressionImpl("OR", Type.TERM_INFIX, List.of(
-      x, y
-      )
-      );
-    }
-    | 
-    < XOR > y = parseTerm5
-    {
-      x = new PARSER_CLASS.CallExpressionImpl("XOR", Type.TERM_INFIX, List.of(
-      x, y
-      )
-      );
-    }
-    |
-    // range 'm1 : m2' yields set of members
-    < COLON > y = parseTerm5
-    {
-      x = new PARSER_CLASS.CallExpressionImpl(":", Type.TERM_INFIX, List.of(
-      x, y
-      )
-      );
-    }
+    (
+      (<OR>|<XOR>|<XOR>|<COLON>)
+      AndExpression
+    )#BinaryExpression(+1)
   )*
-  {
-    return x;
-  }
 ;
 
 
-Expression parseTerm5 :
-{
-  Expression x;
-  Expression y;
-}
-  x = parseTerm4
+AndExpression#void :
+  NegatedExpression 
   (
-    < AND > y = parseTerm4
-    {
-      x = new PARSER_CLASS.CallExpressionImpl("AND", Type.TERM_INFIX, List.of(
-      x, y
-      )
-      );
-    }
+    (
+      < AND > 
+      NegatedExpression 
+    )#BinaryExpression(+1)
   )*
-  {
-    return x;
-  }
 ;
 
-
-Expression parseTerm4 :
+INJECT NegatedExpression : 
+    import java.util.List;
+    implements Expression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
 {
-  Expression x;
+  public String name() {
+    return "NOT";
+  }
+  
+  public Type type() {
+     return Type.TERM_PREFIX;
+  }
+
+  public List<Expression> expressions() {
+     return List.of((Expression) getChild(1));
+  } 
 }
-  x = parseTerm3
-  {
-    return x;
-  }
-  | 
-  < NOT > x = parseTerm4
-  {
-    return new PARSER_CLASS.CallExpressionImpl("NOT", Type.TERM_PREFIX, List.of(
-    x
-    )
-    );
-  }
+
+NegatedExpression#(>1) :
+  <NOT> NegatedExpression
+  |
+  RelationalExpression
 ;
 
 INJECT RelationalExpression :
    import java.util.List;
-   implements Expression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
+   extends BinaryExpression
 {
-   
-     
-}    
+   public String name() {
+      Node op = getChild(1);
+      if (op.getType() == IS && op.nextSibling().getType() == EMPTY) {
+         return "IS EMPTY";
+      }
+      else if (op.getType() == NOT) {
+        NodeType nextType = op.nextSibling().getType();
+        if (nextType ==MATCHES) return "NOT MATCHES";
+        if (nextType == IN) return "NOT IN";
+      }
+      return super.name();
+   }
 
+   public Type type() {
+      Node is = firstChildOfType(IS);
+      if (is != null) {
+         NodeType nextType = is.nextSibling().getType();
+         if (nextType == NULL || nextType == EMPTY) return Type.TERM_POSTFIX;
+      }
+      return Type.TERM_INFIX;
+   }
 
-Expression parseTerm3 :
-{
-  Expression x;
-  Expression y;
-  Token op;
+   public List<Expression> expressions() {
+      if (type() == Type.TERM_POSTFIX) {
+        return List.of((Expression) getFirstChild());
+      }
+      return super.expressions();
+   }
 }
-  AdditiveExpression {x = (Expression) peekNode();}
+
+RelationalExpression#(>1) :
+  AdditiveExpression 
   (
+    ( 
+      < EQ > | < NE > | < LT > | < GT > | < LE > | < GE > | (<IS>[<EMPTY>]) | ([<NOT>] <MATCHES> =>||) | ([<NOT>] <IN> =>||)
+    ) 
     (
-      < EQ >
-      {
-        op = getToken(0);
-      }
-    | < NE >
-      {
-        op = getToken(0);
-      }
-    | < LT >
-      {
-        op = getToken(0);
-      }
-    | < GT >
-      {
-        op = getToken(0);
-      }
-    | < LE >
-      {
-        op = getToken(0);
-      }
-    | < GE >
-      {
-        op = getToken(0);
-      }
+      SCAN {getToken(0).getType()==EMPTY}# => {}
+      |
+      AdditiveExpression 
     )
-    AdditiveExpression {y = (Expression) peekNode();}
-    {
-      x = new PARSER_CLASS.CallExpressionImpl(op.getImage(), Type.TERM_INFIX, List.of(
-      x, y
-      )
-      );
-    }
-    |
-    // We expect a shift-reduce conflict here, because NULL is a literal and
-    // so is a valid argument to the IS operator. We want to shift.
-    SCAN 2 =>
-    < IS > < NULL >
-    {
-      x = new PARSER_CLASS.CallExpressionImpl("IS NULL", Type.TERM_POSTFIX, List.of(
-      x
-      )
-      );
-    }
-    |
-    // e.g. "x IS y"; but "x IS NULL" is handled elsewhere
-    SCAN 2 =>
-    < IS > 
-    AdditiveExpression {y = (Expression) peekNode();}
-    {
-      x = new PARSER_CLASS.CallExpressionImpl("IS", Type.TERM_INFIX, List.of(
-      x, y
-      )
-      );
-    }
-    | < IS > < EMPTY >
-    {
-      x = new PARSER_CLASS.CallExpressionImpl(
-      "IS EMPTY", Type.TERM_POSTFIX, List.of(x));
-    }
-  | < MATCHES > 
-    AdditiveExpression {y=(Expression) peekNode();}
-    {
-      x = new PARSER_CLASS.CallExpressionImpl("MATCHES", Type.TERM_INFIX, List.of(
-      x, y
-      )
-      );
-    }
-  | SCAN 2 =>
-    < NOT > < MATCHES > 
-    AdditiveExpression {y = (Expression )peekNode();}
-    {
-      x = new PARSER_CLASS.CallExpressionImpl(
-      "NOT", Type.TERM_PREFIX, List.of(
-      new PARSER_CLASS.CallExpressionImpl(
-      "MATCHES", Type.TERM_INFIX, List.of(
-      x, y
-      )
-      )
-      )
-      );
-    }
-  | < IN > 
-    AdditiveExpression {y = (Expression) peekNode();}
-    {
-      x = new PARSER_CLASS.CallExpressionImpl("IN", Type.TERM_INFIX, List.of(
-      x, y
-      )
-      );
-    }
-    | < NOT > < IN > 
-    AdditiveExpression {y = (Expression) peekNode();}
-    {
-      x = new PARSER_CLASS.CallExpressionImpl(
-      "NOT", Type.TERM_PREFIX, List.of(
-      new PARSER_CLASS.CallExpressionImpl(
-      "IN", Type.TERM_INFIX, List.of(
-      x, y
-      )
-      )
-      )
-      );
-    }
-  )*
-  {
-    return x;
-  }
+  )?
 ;
 
 AdditiveExpression#void :
@@ -466,7 +343,7 @@ AdditiveExpression#void :
      |
      <MINUS>
      |
-     // Only seeems yo be in Pentaho
+     // Only seems to be in Pentaho
      <CONCAT>
     )
     MultiplicativeExpression
@@ -487,7 +364,7 @@ INJECT BinaryExpression :
     }
 
     public List<Expression> expressions() {
-        return List.of((Expression) getChild(0), (Expression) getChild(2));
+        return List.of((Expression) getFirstChild(), (Expression) getLastChild());
     }
 }    
 
@@ -638,13 +515,10 @@ INJECT CastExpression :
 }
 
   CastExpression :
-  {
-    Expression expression;
-  }
     <CAST>
     <LPAREN>
-    expression = parseUnaliasedExpression
-    {CURRENT_NODE.setExpression(expression);}
+    OrExpression
+    {CURRENT_NODE.setExpression((Expression) peekNode());}
     <AS>
     NameObjectIdentifier 
     <RPAREN>
@@ -773,48 +647,34 @@ AtomicExpression#interface :
       parseMaybeBangMaybeFunctionCall
 ;
 
-INJECT CaseExpression : implements AtomicExpression 
-
-Expression CaseExpression :
+INJECT CaseExpression : 
+   implements AtomicExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression 
 {
-    Expression expression, expression2;
-    List < Expression > expressions = new ArrayList <> ();
-    boolean match = false;
-}
+   public String name() {
+      return (getChild(1) instanceof Expression) ? "_CaseMatch" : "_CaseTest";
+   }
+
+   public Type type() {
+      return Type.TERM_CASE;
+   }
+
+   public java.util.List<Expression> expressions() {
+      return childrenOfType(Expression.class);
+   }
+}   
+
+CaseExpression :
     < CASE >
     (
-      expression = Expression
-      {
-        match = true;
-        expressions.add(expression);
-      }
+      Expression
     )?
     (
-      < WHEN > expression = Expression < THEN > expression2 = Expression
-      {
-        expressions.add(expression);
-        expressions.add(expression2);
-      }
+      < WHEN > Expression < THEN > Expression
     )*
     (
-      < ELSE > expression = Expression
-      {
-        expressions.add(expression);
-      }
+      < ELSE > Expression
     )?
     < END >
-    {
-      if (match)
-      {
-        return new PARSER_CLASS.CallExpressionImpl(
-        "_CaseMatch", Type.TERM_CASE, expressions);
-      }
-      else
-      {
-        return new PARSER_CLASS.CallExpressionImpl(
-        "_CaseTest", Type.TERM_CASE, expressions);
-      }
-    }
 ;
 
 INJECT FormulaExpression : implements org.eclipse.daanse.mdx.model.api.expression.FormulaExpression;
