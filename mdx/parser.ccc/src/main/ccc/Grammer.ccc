@@ -1293,6 +1293,10 @@ NumericLiteral parseNumericLiteral :
   }
 ;
 
+EmptyExpression#(true) :
+{}
+;
+
 
 Expression parseAtom :
 {

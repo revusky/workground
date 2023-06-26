@@ -17,92 +17,6 @@
 
 INJECT PARSER_CLASS :
   import org.eclipse.daanse.mdx.model.api.expression.CallExpression.Type;
-{
-	public static Expression createCall(Expression left, ObjectIdentifier objectIdentifier,
-			List<Expression> expressions) {
-		final String name = objectIdentifier instanceof NameObjectIdentifier nameObjectIdentifier
-				?  nameObjectIdentifier.name()
-				: null;
-		if (expressions != null) {
-			if (left != null) {
-				// Method syntax: "x.foo(arg1, arg2)" or "x.foo()"
-				expressions.add(0, left);
-				return new CallExpressionImpl(name, Type.METHOD, expressions);
-			} else {
-				// Function syntax: "foo(arg1, arg2)" or "foo()"
-				return new CallExpressionImpl(name, Type.FUNCTION, expressions);
-			}
-		} else {
-			// Member syntax: "foo.bar"
-			// or property syntax: "foo.RESERVED_WORD"
-			Type type;
-			boolean call = false;
-			switch (objectIdentifier.quoting()) {
-			case UNQUOTED:
-				type = Type.PROPERTY;
-				call = true;
-				break;
-			case QUOTED:
-				type = Type.PROPERTY_QUOTED;
-				break;
-			default:
-				type = Type.PROPERTY_AMPERS_AND_QUOTED;
-				break;
-			}
-			if (!call && left instanceof CompoundId compoundIdLeft) {
-        CompoundId result = new CompoundId();
-        for (ObjectIdentifier oi : compoundIdLeft.objectIdentifiers()) {
-           result.addChild(oi);
-        }
-        result.addChild((Node) objectIdentifier);
-        return result;
-			} else if (left == null) {
-        return new CompoundId(objectIdentifier);
-			} else {
-				return new CallExpressionImpl(name, type, List.of(left));
-			}
-		}
-	}
-
-  public static class CallExpressionImpl extends NODE_PACKAGE.BaseNode implements Expression, org.eclipse.daanse.mdx.model.api.expression.CallExpression {
-      private String name;
-      private Type type;
-      List<? extends Expression> expressions;
-      public CallExpressionImpl(String name,
-                                Type type,
-                                List<? extends Expression> expressions) 
-      {
-         assert name != null;
-         assert type != null;
-         assert expressions != null;
-
-         this.name = name;
-         this.type = type;
-         this.expressions = expressions;
-         switch (type) {
-            case BRACES:
-                assert name.equals("{}");
-                break;
-            case PARENTHESES:
-                assert name.equals("()");
-                break;
-            case INTERNAL:
-                assert name.startsWith("$");
-                break;
-            case EMPTY:
-                assert name.equals("");
-                break;
-            default:
-                assert !name.startsWith("$") && !name.equals("{}") && !name.equals("()");
-                break;
-         }
-      }
-
-      public String name() {return name;}
-      public Type type() { return type;}
-      public List<? extends Expression>  expressions() {return expressions;}
-  }
-}
 
 INJECT Expression : extends org.eclipse.daanse.mdx.model.api.expression.Expression
 
@@ -119,17 +33,6 @@ Expression Expression#interface :
   }
 ;
 
-
-Expression parseExpressionOrEmpty :
-  Expression
-  {
-    return (Expression) peekNode();
-  }
-  | /* empty */
-  {
-    return new PARSER_CLASS.CallExpressionImpl("", Type.EMPTY, List.of());
-  }
-;
 
 // List of expressions, none of which may be empty.
 List < Expression > expList :
@@ -416,8 +319,8 @@ PrimaryExpression#interface :
       (
         (
           < LPAREN > 
-          (Expression)?
-          (< COMMA > (Expression)?)*
+          PossiblyEmptyExpression
+          (< COMMA > PossiblyEmptyExpression)*
           < RPAREN >
         ) #FunctionCall(+1)
       )?
@@ -446,8 +349,6 @@ INJECT DotName :
 }    
   
 INJECT FunctionCall : 
-    import java.util.List;
-    import java.util.ArrayList;
     implements PrimaryExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
 {
     public String name() {
@@ -458,21 +359,8 @@ INJECT FunctionCall :
        return expressions().size() > 1 ? Type.FUNCTION : Type.METHOD;
     }
 
-    public List<Expression> expressions() {
-       List<Expression> result = new ArrayList<>();
-       result.add((Expression) getChild(0));
-       for (int i = 1; i < getChildCount(); i++) {
-          Node child = getChild(i);
-          if (child instanceof Expression e) result.add(e);
-          else if (child.getType() == COMMA) {
-            // REVISIT maybe should use something instead of null
-             if (!(child.previousSibling() instanceof Expression)) {
-                result.add(null);
-             }
-             if (child.nextSibling().getType()==RPAREN) result.add(null);
-          }
-       }
-       return result;
+    public java.util.List<Expression> expressions() {
+       return childrenOfType(Expression.class);
     }
 }    
       
@@ -514,7 +402,7 @@ INJECT CastExpression :
       }
 }
 
-  CastExpression :
+CastExpression :
     <CAST>
     <LPAREN>
     OrExpression
@@ -522,52 +410,70 @@ INJECT CastExpression :
     <AS>
     NameObjectIdentifier 
     <RPAREN>
-  ;
+;
 
-  Expression parseExpressionList#void :
-  {
-    List<Expression> expressions;
+INJECT ExpressionList :
+  implements AtomicExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
+{
+  public String name() {
+    return "()";
   }
-    < LPAREN > expressions = expList < RPAREN >
-    {
-      // Whereas ([Sales],[Time]) and () are tuples, ([Sales]) and (5)
-      // are just expressions.
-      return new PARSER_CLASS.CallExpressionImpl(
-      "()", Type.PARENTHESES, expressions);
-    }
-  ;
 
-  INJECT Tuple : implements AtomicExpression
-
-  Expression Tuple :
-  {
-    List<Expression> expressions;
+  public Type type() {
+     return Type.PARENTHESES;
   }
-    // set built from sets/tuples
-    < LBRACE >
-    (
-      SCAN < RBRACE > =>
-      {
-        expressions = Collections.emptyList();
-      }
-      |
-      expressions = expList
-    )
-    < RBRACE >
-    {
-      return new PARSER_CLASS.CallExpressionImpl(
-      "{}", Type.BRACES, expressions);
-    }
-  ;
 
-  Expression OnlyName#void :
-    NameObjectIdentifier ASSERT ~(<BANG>|<LPAREN>) =>||
-    {
-        return (Expression) peekNode();
-    }
-  ;
+  public java.util.List<Expression> expressions() {
+     return childrenOfType(Expression.class);
+  }
+}  
 
-  Expression parseMaybeBangMaybeFunctionCall#void :
+ExpressionList : 
+   <LPAREN>
+   Expression
+   (<COMMA> Expression)*
+   <RPAREN>
+;
+
+INJECT Tuple : 
+  implements AtomicExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
+{
+  public String name() {
+     return "{}";
+  }
+
+  public Type type() {
+     return Type.BRACES;
+  }
+
+  public java.util.List<Expression> expressions() {
+     return childrenOfType(Expression.class);
+  }
+}  
+
+Tuple :
+  // set built from sets/tuples
+  < LBRACE >
+  (
+    Expression
+    (<COMMA> Expression)*
+  )?
+  < RBRACE >
+;
+
+INJECT QualifiedIdentifier : 
+  implements AtomicExpression
+ 
+QualifiedIdentifier#(>1) :
+   NameObjectIdentifier
+      // We support the syntax for qualifying function names with package
+      // names separated by bang ('!'), e.g. 'whiz!bang!foo(a, b)'
+      // but currently we ignore the qualifiers. The previous example is
+      // equivalent to 'foo(a, b)'.
+   (<BANG> NameObjectIdentifier)*
+;   
+
+IdentifierOrFunctionCall#void :
     // Function call "foo(a, b)" or "whiz!bang!foo(a, b)".
     // Properties "x.PROP" and methods "exp.meth(a)" are in primary().
   {
@@ -575,35 +481,35 @@ INJECT CastExpression :
     NameObjectIdentifier nameObjectIdentifier;
     List < Expression > expressions = null;
   }
-    nameObjectIdentifier = NameObjectIdentifier
+    QualifiedIdentifier
     (
-      < BANG > 
-      nameObjectIdentifier = NameObjectIdentifier
-      {
-      // We support the syntax for qualifying function names with package
-      // names separated by bang ('!'), e.g. 'whiz!bang!foo(a, b)'
-      // but currently we ignore the qualifiers. The previous example is
-      // equivalent to 'foo(a, b)'.
-      }
-    )*
-    (
+      (
       < LPAREN >
       (
-        SCAN < RPAREN > =>
-        {
-          expressions = Collections.emptyList();
-        }
+        SCAN < RPAREN > => {}
         |
-        expressions = expOrEmptyList
+        PossiblyEmptyExpression
+        (<COMMA> PossiblyEmptyExpression)*
       )
       < RPAREN >
+      ) #FunctionCall(+1)
     )?
-    {
-      return createCall(null, nameObjectIdentifier, expressions);
-    }
-  ;
+;
 
-  
+INJECT EmptyExpression : implements Expression
+
+EmptyExpression#(true) :
+{
+   CURRENT_NODE.setBeginOffset(lastConsumedToken.getEndOffset());
+}
+;
+
+PossiblyEmptyExpression#void :
+  Expression
+  |
+  EmptyExpression 
+;
+
 // Comma-separated list of expressions, some of which may be empty. Used
 // for functions.
 List < Expression > expOrEmptyList :
@@ -611,13 +517,13 @@ List < Expression > expOrEmptyList :
   Expression expression;
   List < Expression > list = new LinkedList<>();
 }
-  expression = parseExpressionOrEmpty
+  PossiblyEmptyExpression {expression = (Expression) peekNode();}
   {
     list.add(expression);
   }
   (
     < COMMA >
-    expression = parseExpressionOrEmpty
+    PossiblyEmptyExpression {expression = (Expression) peekNode();}
     {
       list.add(expression);
     }
@@ -636,15 +542,13 @@ AtomicExpression#interface :
       | 
       CastExpression
       |
-      parseExpressionList
+      ExpressionList
       | 
       Tuple 
       | 
       CaseExpression 
       |
-      OnlyName 
-      |
-      parseMaybeBangMaybeFunctionCall
+      IdentifierOrFunctionCall
 ;
 
 INJECT CaseExpression : 
