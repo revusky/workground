@@ -143,31 +143,6 @@ Expression parseExpressionOrEmpty :
   }
 ;
 
-
-// Comma-separated list of expressions, some of which may be empty. Used
-// for functions.
-List < Expression > expOrEmptyList :
-{
-  Expression expression;
-  List < Expression > list = new LinkedList<>();
-}
-  expression = parseExpressionOrEmpty
-  {
-    list.add(expression);
-  }
-  (
-    < COMMA >
-    expression = parseExpressionOrEmpty
-    {
-      list.add(expression);
-    }
-  )*
-  {
-    return list;
-  }
-;
-
-
 // List of expressions, none of which may be empty.
 List < Expression > expList :
 {
@@ -198,10 +173,10 @@ Expression parseExpressionEof :
   expression = Expression < EOF >
   {
     return expression;
-  }
+  } 
 ;
 
-INJECT ObjectIdentifier : extends org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier
+INJECT interface ObjectIdentifier : extends Expression, org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier
 
 ObjectIdentifier ObjectIdentifier#interface :
 {
@@ -363,7 +338,7 @@ Expression parseTerm3 :
   Expression y;
   Token op;
 }
-  x = parseTerm2
+  AdditiveExpression {x = (Expression) peekNode();}
   (
     // e.g. "1 < 5"
     (
@@ -392,14 +367,14 @@ Expression parseTerm3 :
         op = getToken(0);
       }
     )
-    y = parseTerm2
+    AdditiveExpression {y = (Expression) peekNode();}
     {
       x = new PARSER_CLASS.CallExpressionImpl(op.getImage(), Type.TERM_INFIX, List.of(
       x, y
       )
       );
     }
-  |
+    |
     // We expect a shift-reduce conflict here, because NULL is a literal and
     // so is a valid argument to the IS operator. We want to shift.
     SCAN 2 =>
@@ -410,22 +385,24 @@ Expression parseTerm3 :
       )
       );
     }
-  |
+    |
     // e.g. "x IS y"; but "x IS NULL" is handled elsewhere
     SCAN 2 =>
-    < IS > y = parseTerm2
+    < IS > 
+    AdditiveExpression {y = (Expression) peekNode();}
     {
       x = new PARSER_CLASS.CallExpressionImpl("IS", Type.TERM_INFIX, List.of(
       x, y
       )
       );
     }
-  | < IS > < EMPTY >
+    | < IS > < EMPTY >
     {
       x = new PARSER_CLASS.CallExpressionImpl(
       "IS EMPTY", Type.TERM_POSTFIX, List.of(x));
     }
-  | < MATCHES > y = parseTerm2
+  | < MATCHES > 
+    AdditiveExpression {y=(Expression) peekNode();}
     {
       x = new PARSER_CLASS.CallExpressionImpl("MATCHES", Type.TERM_INFIX, List.of(
       x, y
@@ -433,7 +410,8 @@ Expression parseTerm3 :
       );
     }
   | SCAN 2 =>
-    < NOT > < MATCHES > y = parseTerm2
+    < NOT > < MATCHES > 
+    AdditiveExpression {y = (Expression )peekNode();}
     {
       x = new PARSER_CLASS.CallExpressionImpl(
       "NOT", Type.TERM_PREFIX, List.of(
@@ -445,14 +423,16 @@ Expression parseTerm3 :
       )
       );
     }
-  | < IN > y = parseTerm2
+  | < IN > 
+    AdditiveExpression {y = (Expression) peekNode();}
     {
       x = new PARSER_CLASS.CallExpressionImpl("IN", Type.TERM_INFIX, List.of(
       x, y
       )
       );
     }
-  | < NOT > < IN > y = parseTerm2
+    | < NOT > < IN > 
+    AdditiveExpression {y = (Expression) peekNode();}
     {
       x = new PARSER_CLASS.CallExpressionImpl(
       "NOT", Type.TERM_PREFIX, List.of(
@@ -470,131 +450,166 @@ Expression parseTerm3 :
   }
 ;
 
-
-Expression parseTerm2 :
+INJECT AdditiveExpression :
+    import java.util.List;
+    implements Expression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
 {
-  Expression x;
-  Expression y;
+    public String name() {
+       return getChild(1).getImage();
+    }
+
+    public Type type() {
+       return Type.TERM_INFIX; 
+    }
+
+    public List<Expression> expressions() {
+        return List.of((Expression) getChild(0), (Expression) getChild(2));
+    }
 }
-  x = parseTerm
+
+
+AdditiveExpression#(>1) :
+  MultiplicativeExpression
   (
-    < PLUS > y = parseTerm
-    {
-      x = new PARSER_CLASS.CallExpressionImpl("+", Type.TERM_INFIX, List.of(
-      x, y
-      )
-      );
-    }
-    | 
-    < MINUS > y = parseTerm
-    {
-      x = new PARSER_CLASS.CallExpressionImpl("-", Type.TERM_INFIX, List.of(
-      x, y
-      )
-      );
-    }
-  | < CONCAT > y = parseTerm
-    {
-      x = new PARSER_CLASS.CallExpressionImpl("||", Type.TERM_INFIX, List.of(
-      x, y
-      )
-      );
-    }
+    (
+     <PLUS>
+     |
+     <MINUS>
+     |
+     // Only seeems yo be in Pentaho
+     <CONCAT>
+    )
+    MultiplicativeExpression
   )*
-  {
-    return x;
-  }
 ;
 
-
-Expression parseTerm :
+INJECT MultiplicativeExpression :
+    import java.util.List;
+    implements Expression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
 {
-  Expression x;
-  Expression y;
-}
-  x = parseFactor
+    public String name() {
+       return getChild(1).getImage();
+    }
+
+    public Type type() {
+       return Type.TERM_INFIX; 
+    }
+
+    public List<Expression> expressions() {
+        return List.of((Expression) getChild(0), (Expression) getChild(2));
+    }
+}    
+
+MultiplicativeExpression#(>1) :
+  UnaryExpression
   (
-    < ASTERISK > y = parseFactor
-    {
-      x = new PARSER_CLASS.CallExpressionImpl("*", Type.TERM_INFIX, List.of(
-      x, y
-      )
-      );
-    }
-  | < SOLIDUS > y = parseFactor
-    {
-      x = new PARSER_CLASS.CallExpressionImpl("/", Type.TERM_INFIX, List.of(
-      x, y
-      )
-      );
-    }
+    (<ASTERISK>|<SOLIDUS>) 
+    UnaryExpression
   )*
-  {
-    return x;
-  }
 ;
-Expression parseFactor :
+
+INJECT UnaryExpression : 
+    import java.util.List;
+    implements Expression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
 {
-  Expression p;
+    public String name() {
+       return getChild(0).getImage();
+    }
+
+    public Type type() {
+       return Type.TERM_PREFIX; 
+    }
+
+    public List<Expression> expressions() {
+        return List.of((Expression) getChild(1));
+    }
+
 }
-    p = PrimaryExpression
-    {
-      return p;
-    }
-    | < PLUS > p = PrimaryExpression
-    {
-      return p;
-    }
-    | < MINUS > p = PrimaryExpression
-    {
-      return new PARSER_CLASS.CallExpressionImpl("-", Type.TERM_PREFIX, List.of(
-      p
-      )
-      );
-    }
-    | < EXISTING > p = PrimaryExpression
-    {
-      return new PARSER_CLASS.CallExpressionImpl("Existing", Type.TERM_PREFIX, List.of(
-      p
-      )
-      );
-    }
-  ;
 
-  INJECT PrimaryExpression : extends Expression
-
-  PrimaryExpression#interface :
-  {
-    Expression expression;
-  }
-    expression = AtomicExpression
+UnaryExpression#(>1) :
     (
-      < DOT > 
-      expression = objectIdentifierOrFuncall(expression)
-    )*
-  ;
-
-  Expression objectIdentifierOrFuncall(Expression left) :
-  {
-    ObjectIdentifier objectIdentifier;
-    List < Expression > argList = null;
-  }
-    objectIdentifier = ObjectIdentifier
-    (
-      < LPAREN >
-      (
-        argList = expOrEmptyList
-      )
-      < RPAREN >
+      <PLUS>
+      |
+      <MINUS>
+      |
+      // This is only in Pentaho, it seems.
+      <EXISTING>
     )?
-    {
-      return createCall(left, objectIdentifier, argList);
+    PrimaryExpression
+;    
+
+INJECT PrimaryExpression : extends Expression
+
+PrimaryExpression#interface :
+    AtomicExpression
+    (
+      (< DOT > ObjectIdentifier) #DotName(+1)
+      (
+        (
+          < LPAREN > 
+          (Expression)?
+          (< COMMA > (Expression)?)*
+          < RPAREN >
+        ) #FunctionCall(+1)
+      )?
+    )*
+;
+
+INJECT DotName : 
+    implements PrimaryExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
+{
+    public String name() {
+        return getChild(2) instanceof NameObjectIdentifier noi ? noi.name() : null;
     }
-  ;
 
-  INJECT interface Literal : extends AtomicExpression, org.eclipse.daanse.mdx.model.api.expression.Literal
+    public Type type() {
+       ObjectIdentifier oi = (ObjectIdentifier) getChild(2);
+       return switch (oi.quoting()) {
+			    case UNQUOTED -> Type.PROPERTY;
+			    case QUOTED -> Type.PROPERTY_QUOTED;
+          default-> Type.PROPERTY_AMPERS_AND_QUOTED;
+			 };       
+    }
 
-  Literal#interface :
+    public java.util.List<Expression> expressions() {
+       return childrenOfType(Expression.class);
+    }
+}    
+  
+INJECT FunctionCall : 
+    import java.util.List;
+    import java.util.ArrayList;
+    implements PrimaryExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
+{
+    public String name() {
+        return getChild(2) instanceof NameObjectIdentifier noi ? noi.name() : null;
+    }
+
+    public Type type() {
+       return expressions().size() > 1 ? Type.FUNCTION : Type.METHOD;
+    }
+
+    public List<Expression> expressions() {
+       List<Expression> result = new ArrayList<>();
+       result.add((Expression) getChild(0));
+       for (int i = 1; i < getChildCount(); i++) {
+          Node child = getChild(i);
+          if (child instanceof Expression e) result.add(e);
+          else if (child.getType() == COMMA) {
+            // REVISIT maybe should use something instead of null
+             if (!(child.previousSibling() instanceof Expression)) {
+                result.add(null);
+             }
+             if (child.nextSibling().getType()==RPAREN) result.add(null);
+          }
+       }
+       return result;
+    }
+}    
+      
+INJECT interface Literal : extends AtomicExpression, org.eclipse.daanse.mdx.model.api.expression.Literal
+
+Literal#interface :
     <STRING_LITERAL>
     |
     <UNSIGNED_INTEGER_LITERAL>
@@ -604,28 +619,31 @@ Expression parseFactor :
     <APPROX_NUMERIC_LITERAL>
     |
     <NULL>
-  ;
+;
 
-  INJECT CastExpression :
+INJECT CastExpression :
     import java.util.List;
+    import java.util.ArrayList;
     import org.eclipse.daanse.mdx.model.api.expression.Expression;
     implements AtomicExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
-  {
-      @Property Expression expression;
+{
+    @Property Expression expression;
 
-      public String name() {
-        return "CAST";
-      }
+    public String name() {
+      return "CAST";
+    }
 
-      public Type type() {
-        return Type.CAST;
-      }
+    public Type type() {
+      return Type.CAST;
+    }
 
-      public List<Expression> expressions() {
-        NameObjectIdentifier noi = firstChildOfType(NameObjectIdentifier.class);
-        return List.of(getExpression(), noi);
+    public List<Expression> expressions() {
+        List<Expression> result = new ArrayList<>();
+        result.add(getExpression());
+        result.add((Expression) firstChildOfType(NameObjectIdentifier.class));
+        return result;
       }
-  }
+}
 
   CastExpression :
   {
@@ -719,40 +737,58 @@ Expression parseFactor :
     }
   ;
 
-  INJECT AtomicExpression : extends PrimaryExpression
-
-  Expression AtomicExpression#interface :
+  
+// Comma-separated list of expressions, some of which may be empty. Used
+// for functions.
+List < Expression > expOrEmptyList :
+{
+  Expression expression;
+  List < Expression > list = new LinkedList<>();
+}
+  expression = parseExpressionOrEmpty
   {
-    Expression expression;
+    list.add(expression);
   }
-    (
-      Literal {expression = (Expression) lastConsumedToken;}
-      | 
-      expression=CastExpression
-      |
-      expression=parseExpressionList
-      | 
-      expression=Tuple 
-      | 
-      expression = CaseExpression 
-      |
-      expression = OnlyName 
-      |
-      expression = parseMaybeBangMaybeFunctionCall
-    )
+  (
+    < COMMA >
+    expression = parseExpressionOrEmpty
     {
-      return expression;
+      list.add(expression);
     }
-  ;
-
-  INJECT CaseExpression : implements AtomicExpression 
-
-  Expression CaseExpression :
+  )*
   {
+    return list;
+  }
+;
+
+
+
+INJECT AtomicExpression : extends PrimaryExpression
+
+AtomicExpression#interface :
+      Literal 
+      | 
+      CastExpression
+      |
+      parseExpressionList
+      | 
+      Tuple 
+      | 
+      CaseExpression 
+      |
+      OnlyName 
+      |
+      parseMaybeBangMaybeFunctionCall
+;
+
+INJECT CaseExpression : implements AtomicExpression 
+
+Expression CaseExpression :
+{
     Expression expression, expression2;
     List < Expression > expressions = new ArrayList <> ();
     boolean match = false;
-  }
+}
     < CASE >
     (
       expression = Expression
@@ -787,20 +823,18 @@ Expression parseFactor :
         "_CaseTest", Type.TERM_CASE, expressions);
       }
     }
-  ;
+;
 
-  INJECT FormulaExpression : implements org.eclipse.daanse.mdx.model.api.expression.FormulaExpression;
+INJECT FormulaExpression : implements org.eclipse.daanse.mdx.model.api.expression.FormulaExpression;
 
-  FormulaExpression parseFormulaExpression#FormulaExpression :
+FormulaExpression parseFormulaExpression#FormulaExpression :
     ObjectIdentifier < EQ > ObjectIdentifier
     {
       return CURRENT_NODE;
     }
-  ;
+;
 
   INJECT MemberPropertyDefinition :
-    import org.eclipse.daanse.mdx.model.api.expression.Expression;
-    import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier;
     implements org.eclipse.daanse.mdx.model.api.select.MemberPropertyDefinition
   {
     public ObjectIdentifier objectIdentifier() {
