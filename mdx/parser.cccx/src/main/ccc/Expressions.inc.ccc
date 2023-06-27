@@ -106,7 +106,7 @@ CompoundId :
   )*
 ;
 
-OrExpression :
+OrExpression#void :
   AndExpression
   (
     (
@@ -268,7 +268,7 @@ INJECT PrimaryExpression : extends Expression
 PrimaryExpression#interface :
     AtomicExpression
     (
-      (< DOT > ObjectIdentifier) #DotName(+1)
+      (<DOT> ObjectIdentifier) #DotName(+1)
       (
         (
           < LPAREN > 

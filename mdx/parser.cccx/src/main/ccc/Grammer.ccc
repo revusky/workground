@@ -47,16 +47,11 @@ INJECT PARSER_CLASS :
       if (args.length==0) System.err.println("No input file specified.");
       else for (int i=0; i< args.length; i++) {
         System.out.println("Parsing file " + args[i]);
-        try {
-           parseFile(new File(args[i]), true);
-        } catch (Exception e) {
-          System.err.println("error parsing file: " + args[i]);
-          e.printStackTrace();
-        }
+        parseFile(new File(args[i]), true);
       }
    }
 
-   public static void parseFile(File file, boolean dumpTree) throws IOException {
+   public static void parseFile(File file, boolean dumpTree) {
        if (!file.exists()) {
            System.err.println("File " + file + " does not exist.");
            return;
@@ -69,10 +64,16 @@ INJECT PARSER_CLASS :
            }
            return;
        }
-       PARSER_CLASS parser = new PARSER_CLASS(file.toPath());
-       Node root = parser.MdxStatement();
-       if (dumpTree) {
-           root.dump("");
+       try { 
+          PARSER_CLASS parser = new PARSER_CLASS(file.toPath());
+          Node root = parser.MdxStatement();
+          if (dumpTree) {
+              root.dump("");
+          }
+       }
+       catch (Exception e) {
+          System.err.println("error parsing file: " + file);
+          e.printStackTrace();
        }
    }
 }  

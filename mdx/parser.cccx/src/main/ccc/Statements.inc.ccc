@@ -424,7 +424,7 @@ INJECT SelectStatement :
 }
 
 //https://learn.microsoft.com/en-us/sql/mdx/mdx-data-manipulation-select?view=sql-server-ver16
-#SelectStatement :
+SelectStatement :
   (
     < WITH > (SelectWithClause)+
   )?
@@ -442,9 +442,9 @@ INJECT SelectStatement :
   (
     SelectCellPropertyListClause
   )?
-  {
-     return CURRENT_NODE;
-  }
+//  {
+  //   return CURRENT_NODE;
+//  }
 ;
 
 INJECT SelectQueryClause : extends org.eclipse.daanse.mdx.model.api.select.SelectQueryClause
