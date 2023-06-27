@@ -400,7 +400,7 @@ INJECT SelectStatement :
    import org.eclipse.daanse.mdx.model.api.select.SelectWithClause;
    import org.eclipse.daanse.mdx.model.api.select.SelectSlicerAxisClause;
    import org.eclipse.daanse.mdx.model.api.select.SelectCellPropertyListClause;
-   implements org.eclipse.daanse.mdx.model.api.SelectStatement;
+   implements MdxStatement, org.eclipse.daanse.mdx.model.api.SelectStatement;
 {
     public List<SelectWithClause> selectWithClauses() {
         return childrenOfType(SelectWithClause.class);

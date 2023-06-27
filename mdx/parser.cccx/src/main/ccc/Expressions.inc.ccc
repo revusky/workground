@@ -87,14 +87,6 @@ KeyObjectIdentifier :
 
 INJECT CompoundId : implements Expression, org.eclipse.daanse.mdx.model.api.expression.CompoundId
 {
-/*  
-    public CompoundId() {super();}
-
-    public CompoundId(ObjectIdentifier id) {
-      super();
-      addChild(id);
-    }
-*/
     public java.util.List<ObjectIdentifier> objectIdentifiers() {
        return childrenOfType(ObjectIdentifier.class);
     }
