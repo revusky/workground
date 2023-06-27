@@ -57,6 +57,18 @@ INJECT PARSER_CLASS :
    }
 
    public static void parseFile(File file, boolean dumpTree) throws IOException {
+       if (!file.exists()) {
+           System.err.println("File " + file + " does not exist.");
+           return;
+       }
+       if (file.isDirectory()) {
+           for (File f : file.listFiles()) {
+              if (f.isFile() && f.getPath().endsWith(".mdx")) {
+                parseFile(f, dumpTree);
+              }
+           }
+           return;
+       }
        PARSER_CLASS parser = new PARSER_CLASS(file.toPath());
        Node root = parser.MdxStatement();
        if (dumpTree) {

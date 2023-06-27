@@ -27,11 +27,16 @@
              failonerror="true"
              deprecation="off"
              debug="on"
-             classpath="../model.api/target/classes:../model.record/target/classes"
+             classpath="../model.api/target/classes"
       >
         <src path="src/gen/java"/>        
-        <!--src path="src/main/java"/-->        
       </javac>
    </target>
-
+   <target name="test" depends="compile">
+      <java classname="org.eclipse.daanse.mdx.parser.cccx.MdxParser" 
+            classpath="target/classes:../model.api/target/classes">
+          <assertions><enable/></assertions>
+          <arg line="testfiles"/>
+      </java>
+   </target>
 </project>
