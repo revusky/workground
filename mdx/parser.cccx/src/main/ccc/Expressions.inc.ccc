@@ -18,6 +18,13 @@
 INJECT PARSER_CLASS :
   import org.eclipse.daanse.mdx.model.api.expression.CallExpression.Type;
 
+INJECT BASE_NODE_CLASS :
+{
+  public List<Expression> expressions() {
+    return Collections.unmodifiableList(childrenOfType(Expression.class));
+  }
+}  
+
 INJECT Expression : extends org.eclipse.daanse.mdx.model.api.expression.Expression
 
 Expression#interface :
@@ -131,10 +138,6 @@ INJECT NegatedExpression :
   public Type type() {
      return Type.TERM_PREFIX;
   }
-
-  public List<Expression> expressions() {
-     return List.of((Expression) getChild(1));
-  } 
 }
 
 NegatedExpression#(>1) :
@@ -246,10 +249,6 @@ INJECT UnaryExpression :
     public Type type() {
        return Type.TERM_PREFIX; 
     }
-
-    public List<Expression> expressions() {
-        return List.of((Expression) getChild(1));
-    }
 }
 
 UnaryExpression#(>1) :
@@ -296,10 +295,6 @@ INJECT DotName :
           default-> Type.PROPERTY_AMPERS_AND_QUOTED;
 			 };       
     }
-
-    public java.util.List<Expression> expressions() {
-       return childrenOfType(Expression.class);
-    }
 }    
   
 INJECT FunctionCall : 
@@ -311,10 +306,6 @@ INJECT FunctionCall :
 
     public Type type() {
        return expressions().size() > 1 ? Type.FUNCTION : Type.METHOD;
-    }
-
-    public java.util.List<Expression> expressions() {
-       return childrenOfType(Expression.class);
     }
 }    
       
@@ -342,10 +333,6 @@ INJECT CastExpression :
     public Type type() {
       return Type.CAST;
     }
-
-    public java.util.List<Expression> expressions() {
-        return childrenOfType(Expression.class);
-      }
 }
 
 CastExpression :
@@ -367,10 +354,6 @@ INJECT ExpressionList :
   public Type type() {
      return Type.PARENTHESES;
   }
-
-  public java.util.List<Expression> expressions() {
-     return childrenOfType(Expression.class);
-  }
 }  
 
 ExpressionList : 
@@ -389,10 +372,6 @@ INJECT Tuple :
 
   public Type type() {
      return Type.BRACES;
-  }
-
-  public java.util.List<Expression> expressions() {
-     return childrenOfType(Expression.class);
   }
 }  
 
@@ -505,10 +484,6 @@ INJECT CaseExpression :
 
    public Type type() {
       return Type.TERM_CASE;
-   }
-
-   public java.util.List<Expression> expressions() {
-      return childrenOfType(Expression.class);
    }
 }   
 
