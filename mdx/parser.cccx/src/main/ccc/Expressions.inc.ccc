@@ -20,7 +20,7 @@ INJECT PARSER_CLASS :
 
 INJECT Expression : extends org.eclipse.daanse.mdx.model.api.expression.Expression
 
-Expression Expression#interface :
+Expression#interface :
   OrExpression
   (
     (
@@ -28,43 +28,6 @@ Expression Expression#interface :
       ObjectIdentifier
     )#BinaryExpression(+1)
   )*
-  {
-    return (Expression) peekNode();
-  }
-;
-
-
-// List of expressions, none of which may be empty.
-List < Expression > expList :
-{
-  List < Expression > list = new LinkedList<>();
-}
-  Expression
-  {
-    list.add((Expression) peekNode());
-  }
-  (
-    < COMMA >
-    Expression
-    {
-      list.add((Expression) peekNode());
-    }
-  )*
-  {
-    return list;
-  }
-;
-
-
-Expression parseExpressionEof :
-{
-  Expression expression;
-}
-  Expression {expression=(Expression) peekNode();}
-  < EOF >
-  {
-    return expression;
-  } 
 ;
 
 INJECT interface ObjectIdentifier : extends Expression, org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier
@@ -104,11 +67,9 @@ NameObjectIdentifier#interface :
 
 
 INJECT KeyObjectIdentifier :
-   import java.util.List;
-   import java.util.ArrayList;
    implements ObjectIdentifier, org.eclipse.daanse.mdx.model.api.expression.KeyObjectIdentifier
 {
-   public List<NameObjectIdentifier> nameObjectIdentifiers() {
+   public java.util.List<NameObjectIdentifier> nameObjectIdentifiers() {
      return childrenOfType(NameObjectIdentifier.class);
    }
 
@@ -126,13 +87,14 @@ KeyObjectIdentifier :
 
 INJECT CompoundId : implements Expression, org.eclipse.daanse.mdx.model.api.expression.CompoundId
 {
+/*  
     public CompoundId() {super();}
 
     public CompoundId(ObjectIdentifier id) {
       super();
       addChild(id);
     }
-
+*/
     public java.util.List<ObjectIdentifier> objectIdentifiers() {
        return childrenOfType(ObjectIdentifier.class);
     }
@@ -145,7 +107,7 @@ CompoundId :
   )*
 ;
 
-OrExpression# :
+OrExpression :
   AndExpression
   (
     (
@@ -379,13 +341,8 @@ Literal#interface :
 ;
 
 INJECT CastExpression :
-    import java.util.List;
-    import java.util.ArrayList;
-    import org.eclipse.daanse.mdx.model.api.expression.Expression;
     implements AtomicExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
 {
-    @Property Expression expression;
-
     public String name() {
       return "CAST";
     }
@@ -394,11 +351,8 @@ INJECT CastExpression :
       return Type.CAST;
     }
 
-    public List<Expression> expressions() {
-        List<Expression> result = new ArrayList<>();
-        result.add(getExpression());
-        result.add((Expression) firstChildOfType(NameObjectIdentifier.class));
-        return result;
+    public java.util.List<Expression> expressions() {
+        return childrenOfType(Expression.class);
       }
 }
 
@@ -406,7 +360,6 @@ CastExpression :
     <CAST>
     <LPAREN>
     OrExpression
-    {CURRENT_NODE.setExpression((Expression) peekNode());}
     <AS>
     NameObjectIdentifier 
     <RPAREN>
@@ -581,18 +534,9 @@ CaseExpression :
     < END >
 ;
 
-INJECT FormulaExpression : implements org.eclipse.daanse.mdx.model.api.expression.FormulaExpression;
-
-FormulaExpression parseFormulaExpression#FormulaExpression :
-    ObjectIdentifier < EQ > ObjectIdentifier
-    {
-      return CURRENT_NODE;
-    }
-;
-
-  INJECT MemberPropertyDefinition :
-    implements org.eclipse.daanse.mdx.model.api.select.MemberPropertyDefinition
-  {
+INJECT MemberPropertyDefinition :
+  implements org.eclipse.daanse.mdx.model.api.select.MemberPropertyDefinition
+{
     public ObjectIdentifier objectIdentifier() {
         return (ObjectIdentifier) getChild(0);
    }
