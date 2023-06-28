@@ -1,0 +1,4 @@
+#!/bin/sh
+
+BASE=$(dirname $0)/..
+java -cp $BASE/target/classes:$BASE/../model.api/target/classes org.eclipse.daanse.mdx.parser.cccx.MdxParser "$@"
