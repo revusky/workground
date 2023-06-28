@@ -258,7 +258,7 @@ UnaryExpression#(>1) :
 INJECT PrimaryExpression : extends Expression
 
 PrimaryExpression#interface :
-    AtomicExpression
+    PrimaryPrefix
     (
       (<DOT> ObjectIdentifier) #DotName(+1)
       (
@@ -270,6 +270,20 @@ PrimaryExpression#interface :
         ) #FunctionCall(+1)
       )?
     )*
+;
+
+PrimaryPrefix#void :
+      Literal 
+      | 
+      CastExpression
+      |
+      ExpressionList
+      | 
+      Tuple 
+      | 
+      CaseExpression 
+      |
+      IdentifierOrFunctionCall
 ;
 
 INJECT DotName : 
@@ -301,7 +315,7 @@ INJECT FunctionCall :
     }
 }    
       
-INJECT interface Literal : extends AtomicExpression, org.eclipse.daanse.mdx.model.api.expression.Literal
+INJECT interface Literal : extends PrimaryExpression, org.eclipse.daanse.mdx.model.api.expression.Literal
 
 Literal#interface :
     <STRING_LITERAL>
@@ -316,7 +330,7 @@ Literal#interface :
 ;
 
 INJECT CastExpression :
-    implements AtomicExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
+    implements PrimaryExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
 {
     public String name() {
       return "CAST";
@@ -337,7 +351,7 @@ CastExpression :
 ;
 
 INJECT ExpressionList :
-  implements AtomicExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
+  implements PrimaryExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
 {
   public String name() {
     return "()";
@@ -356,7 +370,7 @@ ExpressionList :
 ;
 
 INJECT Tuple : 
-  implements AtomicExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
+  implements PrimaryExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression
 {
   public String name() {
      return "{}";
@@ -378,7 +392,7 @@ Tuple :
 ;
 
 INJECT QualifiedIdentifier : 
-  implements AtomicExpression
+  implements PrimaryExpression
  
 QualifiedIdentifier#(>1) :
    NameObjectIdentifier
@@ -426,24 +440,8 @@ PossiblyEmptyExpression#void :
   EmptyExpression 
 ;
 
-INJECT AtomicExpression : extends PrimaryExpression
-
-AtomicExpression#interface :
-      Literal 
-      | 
-      CastExpression
-      |
-      ExpressionList
-      | 
-      Tuple 
-      | 
-      CaseExpression 
-      |
-      IdentifierOrFunctionCall
-;
-
 INJECT CaseExpression : 
-   implements AtomicExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression 
+   implements PrimaryExpression, org.eclipse.daanse.mdx.model.api.expression.CallExpression 
 {
    public String name() {
       return (getChild(1) instanceof Expression) ? "_CaseMatch" : "_CaseTest";
