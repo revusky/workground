@@ -442,9 +442,6 @@ SelectStatement :
   (
     SelectCellPropertyListClause
   )?
-//  {
-  //   return CURRENT_NODE;
-//  }
 ;
 
 INJECT SelectQueryClause : extends org.eclipse.daanse.mdx.model.api.select.SelectQueryClause

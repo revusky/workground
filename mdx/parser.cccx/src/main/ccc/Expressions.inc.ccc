@@ -39,18 +39,10 @@ Expression#interface :
 
 INJECT interface ObjectIdentifier : extends Expression, org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier
 
-ObjectIdentifier ObjectIdentifier#interface :
-{
-  ObjectIdentifier objectIdentifier;
-}
-  (
-    objectIdentifier = NameObjectIdentifier
-    |
-    objectIdentifier = KeyObjectIdentifier
-  )
-  {
-    return objectIdentifier;
-  }
+ObjectIdentifier#interface :
+  NameObjectIdentifier
+  |
+  KeyObjectIdentifier
 ;
 
 INJECT interface NameObjectIdentifier : 
@@ -62,11 +54,11 @@ NameObjectIdentifier#interface :
   // It seems that some reserved words can act as identifiers under
   // some considerations, but of course, that is what the [...] is for, no?
   // This only seems to exist in the Pentaho grammar. REVISIT
-  //parseKeyword 
+  //<RESERVED_WORD>
   //|
   < ID > 
   |
-  // Neither the Microsoft spec the Oracle spec makes any mention of this!  
+  // Neither the Microsoft spec nor the Oracle spec makes any mention of this!  
   < AT_ID > 
   | 
   < QUOTED_ID >
@@ -433,31 +425,6 @@ PossiblyEmptyExpression#void :
   |
   EmptyExpression 
 ;
-
-// Comma-separated list of expressions, some of which may be empty. Used
-// for functions.
-List < Expression > expOrEmptyList :
-{
-  Expression expression;
-  List < Expression > list = new LinkedList<>();
-}
-  PossiblyEmptyExpression {expression = (Expression) peekNode();}
-  {
-    list.add(expression);
-  }
-  (
-    < COMMA >
-    PossiblyEmptyExpression {expression = (Expression) peekNode();}
-    {
-      list.add(expression);
-    }
-  )*
-  {
-    return list;
-  }
-;
-
-
 
 INJECT AtomicExpression : extends PrimaryExpression
 
