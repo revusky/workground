@@ -260,15 +260,18 @@ INJECT PrimaryExpression : extends Expression
 PrimaryExpression#interface :
     PrimaryPrefix
     (
-      (<DOT> ObjectIdentifier) #DotName(+1)
+      SCAN 1 {!(peekNode() instanceof CompoundId || peekNode() instanceof QualifiedIdentifier)}
+      => 
+      <DOT> ObjectIdentifier #DotName(3)
+      |
+      SCAN 1 {peekNode() instanceof CompoundId || peekNode() instanceof QualifiedIdentifier || peekNode() instanceof DotName}
+      =>
       (
-        (
           < LPAREN > 
           PossiblyEmptyExpression
           (< COMMA > PossiblyEmptyExpression)*
           < RPAREN >
-        ) #FunctionCall(+1)
-      )?
+      ) #FunctionCall(+1)
     )*
 ;
 
@@ -283,7 +286,9 @@ PrimaryPrefix#void :
       | 
       CaseExpression 
       |
-      IdentifierOrFunctionCall
+      QualifiedIdentifier
+      |
+      CompoundId
 ;
 
 INJECT DotName : 
@@ -394,37 +399,15 @@ Tuple :
 INJECT QualifiedIdentifier : 
   implements PrimaryExpression
  
-QualifiedIdentifier#(>1) :
+QualifiedIdentifier :
    NameObjectIdentifier
+   =>|+1
       // We support the syntax for qualifying function names with package
       // names separated by bang ('!'), e.g. 'whiz!bang!foo(a, b)'
       // but currently we ignore the qualifiers. The previous example is
       // equivalent to 'foo(a, b)'.
-   (<BANG> NameObjectIdentifier)*
+   (<BANG> NameObjectIdentifier)+
 ;   
-
-IdentifierOrFunctionCall#void :
-    // Function call "foo(a, b)" or "whiz!bang!foo(a, b)".
-    // Properties "x.PROP" and methods "exp.meth(a)" are in primary().
-  {
-    Expression expression;
-    NameObjectIdentifier nameObjectIdentifier;
-    List < Expression > expressions = null;
-  }
-    QualifiedIdentifier
-    (
-      (
-      < LPAREN >
-      (
-        SCAN < RPAREN > => {}
-        |
-        PossiblyEmptyExpression
-        (<COMMA> PossiblyEmptyExpression)*
-      )
-      < RPAREN >
-      ) #FunctionCall(+1)
-    )?
-;
 
 INJECT EmptyExpression : implements Expression
 
