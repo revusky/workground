@@ -10,6 +10,8 @@ In terms of multiline comments, the Microsoft spec says clearly that they can ne
 
 So, all of this just boils down to which spec are we implementing? It may not be so hard to make the various things configurable. Well, in the case of the nested comments, that was easy enough to do. Perhaps the thing to do with the different operators is just to support all of them, but then, of course, the `^` operator that exists in the Microsoft implementation would be parsed, but if one is using the Oracle implementation, that construct won't work.
 
+Even Microsoft and Oracle disagree on string literals. For Microsoft, string literals are delimited by single quotes `'` and Oracle uses double quotes `"`. The existing grammar accepts both.
+
 ## Some other things
 
 Various of the interfaces in the packages `org.eclipse.mdx.model.api.*` have methods that return `java.util.List` of some type or other. Just for example, consider [the code here](https://github.com/revusky/workground/blob/work/mdx/model.api/src/main/java/org/eclipse/daanse/mdx/model/api/select/CreateMemberBodyClause.java#L27). It seems to me that this should really be:

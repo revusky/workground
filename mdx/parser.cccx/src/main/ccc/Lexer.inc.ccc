@@ -32,7 +32,7 @@ INJECT PARSER_CLASS :
    public static String stripQuotes(String s) {
       if (s.length() == 2) return "";
       char quoteChar = s.charAt(s.length()-1);
-      s = s.substring(1, s.length());
+      s = s.substring(1, s.length()-1);
       int numQuoteChars = 0;
       if (s.indexOf(quoteChar) >=0) {
          StringBuilder buf = new StringBuilder();
@@ -285,29 +285,38 @@ TOKEN #IdToken :
 ;
 
 INJECT IdToken :
+   import java.util.List;
    import static PARSER_PACKAGE.PARSER_CLASS.stripQuotes;
-   implements NameObjectIdentifier
+   implements NameObjectIdentifier, org.eclipse.daanse.mdx.model.api.expression.CompoundId
 {
    private Quoting quoting;
    private String name;
 
    public Quoting quoting() {
        if (quoting == null) {
-          quoting = getImage().charAt(0) == '[' ? Quoting.QUOTED : Quoting.UNQUOTED;
+          String img = getImage();
+          quoting = img.charAt(img.length()-1) == ']' ? Quoting.QUOTED : Quoting.UNQUOTED;
        }
        return quoting;
    }
 
    public String name() {
       if (name == null) {
-         String image = getImage();
-         name = quoting() == Quoting.QUOTED  ? stripQuotes(image) : image;
+         String img = getImage();
+         if (img.charAt(0) == '&') {
+            img = img.substring(1);
+         }
+         name = img.charAt(0) == '[' ? stripQuotes(img) : img;
       }
       return name;
    }
 
    public String value() {
        return name();
+   }
+
+   public List<NameObjectIdentifier> objectIdentifiers() {
+      return List.of(this);
    }
 
 }   

@@ -78,7 +78,8 @@ INJECT DrillthroughStatement :
    }
 
    public List<ReturnItem> returnItems() {
-      return childrenOfType(ReturnItem.class);
+      List<ReturnItem> result = childrenOfType(ReturnItem.class);
+      return result.isEmpty() ? null : result;
    }
 }   
 
