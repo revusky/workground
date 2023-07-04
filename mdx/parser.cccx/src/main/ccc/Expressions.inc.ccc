@@ -260,11 +260,14 @@ INJECT PrimaryExpression : extends Expression
 PrimaryExpression#interface :
     PrimaryPrefix
     (
-      SCAN 1 {!(peekNode() instanceof CompoundId || peekNode() instanceof QualifiedIdentifier)}
+      SCAN 1 {!(peekNode() instanceof CompoundId || peekNode() instanceof ObjectIdentifier || peekNode() instanceof QualifiedIdentifier)}
       => 
       <DOT> ObjectIdentifier #DotName(3)
       |
-      SCAN 1 {peekNode() instanceof CompoundId || peekNode() instanceof QualifiedIdentifier || peekNode() instanceof DotName}
+      SCAN 1 {peekNode() instanceof CompoundId 
+              || peekNode() instanceof ObjectIdentifier 
+              || peekNode() instanceof QualifiedIdentifier 
+              || peekNode() instanceof DotName}
       =>
       (
           < LPAREN > 
@@ -289,6 +292,14 @@ PrimaryPrefix#void :
       QualifiedIdentifier
       |
       CompoundId
+      {
+        // If the CompoundId object has only
+        // one child (which is a NameObjectIdentifier)
+        // then just replace it with that in the tree.
+        if (peekNode().getChildCount() ==1) {
+          pokeNode(peekNode().getChild(0));
+        }
+      }
 ;
 
 INJECT DotName : 
