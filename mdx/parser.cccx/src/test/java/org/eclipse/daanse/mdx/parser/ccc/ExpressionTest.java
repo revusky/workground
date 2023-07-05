@@ -28,9 +28,9 @@ import org.eclipse.daanse.mdx.model.api.expression.NumericLiteral;
 import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier.Quoting;
 import org.eclipse.daanse.mdx.model.api.expression.StringLiteral;
 import org.eclipse.daanse.mdx.model.api.expression.SymbolLiteral;
-import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
-import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
-import org.eclipse.daanse.mdx.model.record.expression.NumericLiteralR;
+//import org.eclipse.daanse.mdx.model.record.expression.CallExpressionR;
+//import org.eclipse.daanse.mdx.model.record.expression.CompoundIdR;
+//import org.eclipse.daanse.mdx.model.record.expression.NumericLiteralR;
 import org.eclipse.daanse.mdx.parser.api.MdxParserException;
 import org.eclipse.daanse.mdx.parser.cccx.MdxParserWrapper;
 import org.junit.jupiter.api.Nested;
@@ -46,64 +46,70 @@ class ExpressionTest {
 		@Test
 		void testCallExpressionFunctionWithArrayParam() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("FunctionName([arg1, arg2])").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.FUNCTION);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("FunctionName");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(1);
-			checkArgument((CallExpressionR) clause, 0, "arg1, arg2");
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.FUNCTION);
+			assertThat(((CallExpression) clause).name()).isEqualTo("FunctionName");
+			assertThat(((CallExpression) clause).expressions()).hasSize(1);
+			checkArgument((CallExpression) clause, 0, "arg1, arg2");
 		}
 
 		@Test
 		void testCallExpressionFunctionWithoutParams() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("FunctionName()").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.FUNCTION);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("FunctionName");
-			assertThat(((CallExpressionR) clause).expressions()).isEmpty();
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.FUNCTION);
+			assertThat(((CallExpression) clause).name()).isEqualTo("FunctionName");
+			assertThat(((CallExpression) clause).expressions()).isEmpty();
 		}
 
 		@Test
 		void testCallExpressionFunctionWithOneParam() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("FunctionName(arg)").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.FUNCTION);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("FunctionName");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(1);
-			checkArgument((CallExpressionR) clause, 0, "arg");
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.FUNCTION);
+			assertThat(((CallExpression) clause).name()).isEqualTo("FunctionName");
+			assertThat(((CallExpression) clause).expressions()).hasSize(1);
+			checkArgument((CallExpression) clause, 0, "arg");
 		}
 
 		@Test
 		void testCallExpressionFunctionWithSeveralParams() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("FunctionName(arg1, arg2)").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.FUNCTION);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("FunctionName");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(2);
-			checkArgument((CallExpressionR) clause, 0, "arg1");
-			checkArgument((CallExpressionR) clause, 1, "arg2");
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.FUNCTION);
+			assertThat(((CallExpression) clause).name()).isEqualTo("FunctionName");
+			assertThat(((CallExpression) clause).expressions()).hasSize(2);
+			checkArgument((CallExpression) clause, 0, "arg1");
+			checkArgument((CallExpression) clause, 1, "arg2");
 		}
 
 		@Test
 		void testCallExpressionFunctionWithSeveralParamsWithArray() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("FunctionName(arg1, [arg2, arg3])").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.FUNCTION);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("FunctionName");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(2);
-			checkArgument((CallExpressionR) clause, 0, "arg1");
-			checkArgument((CallExpressionR) clause, 1, "arg2, arg3");
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.FUNCTION);
+			assertThat(((CallExpression) clause).name()).isEqualTo("FunctionName");
+			assertThat(((CallExpression) clause).expressions()).hasSize(2);
+			checkArgument((CallExpression) clause, 0, "arg1");
+			checkArgument((CallExpression) clause, 1, "arg2, arg3");
 		}
 
 		@Test
 		void testCallExpressionEmpty() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("FunctionName(arg1, ,arg2)").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.FUNCTION);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("FunctionName");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(3);
-			checkArgument((CallExpressionR) clause, 0, "arg1");
-			checkArgument((CallExpressionR) clause, 2, "arg2");
-			CallExpression callExpression = ((CallExpression) (((CallExpressionR) clause).expressions().get(1)));
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.FUNCTION);
+			assertThat(((CallExpression) clause).name()).isEqualTo("FunctionName");
+			assertThat(((CallExpression) clause).expressions()).hasSize(3);
+			checkArgument((CallExpression) clause, 0, "arg1");
+			checkArgument((CallExpression) clause, 2, "arg2");
+			CallExpression callExpression = ((CallExpression) (((CallExpression) clause).expressions().get(1)));
 			assertThat(callExpression.type()).isEqualTo(CallExpression.Type.EMPTY);
 			assertThat(callExpression.name()).isEmpty();
 		}
@@ -111,36 +117,38 @@ class ExpressionTest {
 		@Test
 		void testCallExpressionProperty() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("object.PROPERTY").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.PROPERTY);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("PROPERTY");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(1);
-			checkArgument((CallExpressionR) clause, 0, "object");
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.PROPERTY);
+			assertThat(((CallExpression) clause).name()).isEqualTo("PROPERTY");
+			assertThat(((CallExpression) clause).expressions()).hasSize(1);
+			checkArgument((CallExpression) clause, 0, "object");
 		}
 
 		@Test
 		void testCallExpressionPropertyQuoted() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("object.&PROPERTY").parseExpression();
 			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.PROPERTY_QUOTED);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.PROPERTY_QUOTED);
 		}
 
 		@Test
 		void testCallExpressionPropertyAmpersAndQuoted() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("object.[&PROPERTY]").parseExpression();
 			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.PROPERTY_AMPERS_AND_QUOTED);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.PROPERTY_AMPERS_AND_QUOTED);
 		}
 
 		@Test
 		void testCallExpressionMethod() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("object.FunctionName()").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.METHOD);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("FunctionName");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(2);
-			checkArgument((CallExpressionR) clause, 0, "object");
-			CallExpression callExpression = ((CallExpression) (((CallExpressionR) clause).expressions().get(1)));
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.METHOD);
+			assertThat(((CallExpression) clause).name()).isEqualTo("FunctionName");
+			assertThat(((CallExpression) clause).expressions()).hasSize(2);
+			checkArgument((CallExpression) clause, 0, "object");
+			CallExpression callExpression = ((CallExpression) (((CallExpression) clause).expressions().get(1)));
 			assertThat(callExpression.type()).isEqualTo(CallExpression.Type.EMPTY);
 			assertThat(callExpression.name()).isEmpty();
 			assertThat(callExpression.expressions()).isNotNull().isEmpty();
@@ -149,35 +157,39 @@ class ExpressionTest {
 		@Test
 		void testCallExpressionMethodWithParameter() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("object.FunctionName(arg)").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.METHOD);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("FunctionName");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(2);
-			checkArgument((CallExpressionR) clause, 0, "object");
-			checkArgument((CallExpressionR) clause, 1, "arg");
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.METHOD);
+			assertThat(((CallExpression) clause).name()).isEqualTo("FunctionName");
+			assertThat(((CallExpression) clause).expressions()).hasSize(2);
+			checkArgument((CallExpression) clause, 0, "object");
+			checkArgument((CallExpression) clause, 1, "arg");
 		}
 
 		@Test
 		void testCallExpressionMethodWithParameterArray() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("object.FunctionName([arg1, arg2])").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.METHOD);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("FunctionName");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(2);
-			checkArgument((CallExpressionR) clause, 0, "object");
-			checkArgument((CallExpressionR) clause, 1, "arg1, arg2");
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.METHOD);
+			assertThat(((CallExpression) clause).name()).isEqualTo("FunctionName");
+			assertThat(((CallExpression) clause).expressions()).hasSize(2);
+			checkArgument((CallExpression) clause, 0, "object");
+			checkArgument((CallExpression) clause, 1, "arg1, arg2");
 		}
 
 		@Test
 		void testCallExpressionMethodWithInnerFunction() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("object.FunctionOuter(FunctionInner())").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.METHOD);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("FunctionOuter");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(2);
-			checkArgument((CallExpressionR) clause, 0, "object");
-			assertThat(((CallExpressionR) clause).expressions().get(1)).isInstanceOf(CallExpressionR.class);
-			CallExpression callExpression = ((CallExpression) (((CallExpressionR) clause).expressions().get(1)));
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.METHOD);
+			assertThat(((CallExpression) clause).name()).isEqualTo("FunctionOuter");
+			assertThat(((CallExpression) clause).expressions()).hasSize(2);
+			checkArgument((CallExpression) clause, 0, "object");
+//			assertThat(((CallExpressionR) clause).expressions().get(1)).isInstanceOf(CallExpressionR.class);
+			assertThat(((CallExpression) clause).expressions().get(1)).isInstanceOf(CallExpression.class);
+			CallExpression callExpression = ((CallExpression) (((CallExpression) clause).expressions().get(1)));
 			assertThat(callExpression.type()).isEqualTo(CallExpression.Type.FUNCTION);
 			assertThat(callExpression.name()).isEqualTo("FunctionInner");
 			assertThat(callExpression.expressions()).isNotNull().isEmpty();
@@ -186,46 +198,51 @@ class ExpressionTest {
 		@Test
 		void testCallExpressionTermCase() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("CASE a WHEN b THEN c END").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.TERM_CASE);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("_CaseMatch");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(3);
-			checkArgument((CallExpressionR) clause, 0, "a");
-			checkArgument((CallExpressionR) clause, 1, "b");
-			checkArgument((CallExpressionR) clause, 2, "c");
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.TERM_CASE);
+			assertThat(((CallExpression) clause).name()).isEqualTo("_CaseMatch");
+			assertThat(((CallExpression) clause).expressions()).hasSize(3);
+			checkArgument((CallExpression) clause, 0, "a");
+			checkArgument((CallExpression) clause, 1, "b");
+			checkArgument((CallExpression) clause, 2, "c");
 		}
 
 		@Test
 		void testCallExpressionBraces1() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("{ expression }").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.BRACES);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("{}");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(1);
-			checkArgument((CallExpressionR) clause, 0, "expression");
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.BRACES);
+			assertThat(((CallExpression) clause).name()).isEqualTo("{}");
+			assertThat(((CallExpression) clause).expressions()).hasSize(1);
+			checkArgument((CallExpression) clause, 0, "expression");
 		}
 
 		@Test
 		void testCallExpressionBraces2() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("{ expression1, expression2 }").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.BRACES);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("{}");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(2);
-			checkArgument((CallExpressionR) clause, 0, "expression1");
-			checkArgument((CallExpressionR) clause, 1, "expression2");
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.BRACES);
+			assertThat(((CallExpression) clause).name()).isEqualTo("{}");
+			assertThat(((CallExpression) clause).expressions()).hasSize(2);
+			checkArgument((CallExpression) clause, 0, "expression1");
+			checkArgument((CallExpression) clause, 1, "expression2");
 		}
 
 		@Test
 		void testCallExpressionBraces3() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("{ [a] : [c] }").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.BRACES);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("{}");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(1);
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.BRACES);
+			assertThat(((CallExpression) clause).name()).isEqualTo("{}");
+			assertThat(((CallExpression) clause).expressions()).hasSize(1);
 
-			assertThat(((CallExpressionR) clause).expressions().get(0)).isInstanceOf(CallExpressionR.class);
-			CallExpressionR callExpression = ((CallExpressionR) (((CallExpressionR) clause).expressions().get(0)));
+//			assertThat(((CallExpressionR) clause).expressions().get(0)).isInstanceOf(CallExpressionR.class);
+			assertThat(((CallExpression) clause).expressions().get(0)).isInstanceOf(CallExpression.class);
+			CallExpression callExpression = ((CallExpression) (((CallExpression) clause).expressions().get(0)));
 			assertThat(callExpression.type()).isEqualTo(CallExpression.Type.TERM_INFIX);
 			assertThat(callExpression.name()).isEqualTo(":");
 			assertThat(callExpression.expressions()).isNotNull().hasSize(2);
@@ -237,24 +254,26 @@ class ExpressionTest {
 		@Test
 		void testCallExpressionBraces4() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("{ [a].[a], [a].[b], [a].[c] }").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			CallExpressionR callExpression = ((CallExpressionR) clause);
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			CallExpression callExpression = ((CallExpression) clause);
 			assertThat(callExpression.type()).isEqualTo(CallExpression.Type.BRACES);
 			assertThat(callExpression.name()).isEqualTo("{}");
 			assertThat(callExpression.expressions()).hasSize(3);
-			assertThat(callExpression.expressions().get(0)).isInstanceOf(CompoundIdR.class);
+//			assertThat(callExpression.expressions().get(0)).isInstanceOf(CompoundIdR.class);
+			assertThat(callExpression.expressions().get(0)).isInstanceOf(CompoundId.class);
 
-			CompoundIdR compoundId0 = (CompoundIdR) callExpression.expressions().get(0);
+			CompoundId compoundId0 = (CompoundId) callExpression.expressions().get(0);
 			assertThat(compoundId0.objectIdentifiers()).hasSize(2);
 			checkCompoundId(compoundId0, 2, 0, "a");
 			checkCompoundId(compoundId0, 2, 1, "a");
 
-			CompoundIdR compoundId1 = (CompoundIdR) callExpression.expressions().get(1);
+			CompoundId compoundId1 = (CompoundId) callExpression.expressions().get(1);
 			assertThat(compoundId1.objectIdentifiers()).hasSize(2);
 			checkCompoundId(compoundId1, 2, 0, "a");
 			checkCompoundId(compoundId1, 2, 1, "b");
 
-			CompoundIdR compoundId2 = (CompoundIdR) callExpression.expressions().get(2);
+			CompoundId compoundId2 = (CompoundId) callExpression.expressions().get(2);
 			assertThat(compoundId2.objectIdentifiers()).hasSize(2);
 			checkCompoundId(compoundId2, 2, 0, "a");
 			checkCompoundId(compoundId2, 2, 1, "c");
@@ -263,58 +282,64 @@ class ExpressionTest {
 		@Test
 		void testCallExpressionParentheses() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("( arg1, arg2 )").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.PARENTHESES);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("()");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(2);
-			checkArgument((CallExpressionR) clause, 0, "arg1");
-			checkArgument((CallExpressionR) clause, 1, "arg2");
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.PARENTHESES);
+			assertThat(((CallExpression) clause).name()).isEqualTo("()");
+			assertThat(((CallExpression) clause).expressions()).hasSize(2);
+			checkArgument((CallExpression) clause, 0, "arg1");
+			checkArgument((CallExpression) clause, 1, "arg2");
 		}
 
 		@Test
 		void testCallExpressionParenthesesWithArray() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("( arg1, [arg2, arg3] )").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.PARENTHESES);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("()");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(2);
-			checkArgument((CallExpressionR) clause, 0, "arg1");
-			checkArgument((CallExpressionR) clause, 1, "arg2, arg3");
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.PARENTHESES);
+			assertThat(((CallExpression) clause).name()).isEqualTo("()");
+			assertThat(((CallExpression) clause).expressions()).hasSize(2);
+			checkArgument((CallExpression) clause, 0, "arg1");
+			checkArgument((CallExpression) clause, 1, "arg2, arg3");
 		}
 
 		@Test
 		void testCallExpressionTermPostfix() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("arg IS EMPTY").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.TERM_POSTFIX);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("IS EMPTY");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(1);
-			checkArgument((CallExpressionR) clause, 0, "arg");
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.TERM_POSTFIX);
+			assertThat(((CallExpression) clause).name()).isEqualTo("IS EMPTY");
+			assertThat(((CallExpression) clause).expressions()).hasSize(1);
+			checkArgument((CallExpression) clause, 0, "arg");
 		}
 
 		@Test
 		void testCallExpressionTermPrefix() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("NOT arg").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.TERM_PREFIX);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("NOT");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(1);
-			checkArgument((CallExpressionR) clause, 0, "arg");
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.TERM_PREFIX);
+			assertThat(((CallExpression) clause).name()).isEqualTo("NOT");
+			assertThat(((CallExpression) clause).expressions()).hasSize(1);
+			checkArgument((CallExpression) clause, 0, "arg");
 		}
 
 		@Test
 		void testCallExpressionTermInfix() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("arg1 AND arg2").parseExpression();
-			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
-			assertThat(((CallExpressionR) clause).type()).isEqualTo(CallExpression.Type.TERM_INFIX);
-			assertThat(((CallExpressionR) clause).name()).isEqualTo("AND");
-			assertThat(((CallExpressionR) clause).expressions()).hasSize(2);
-			checkArgument((CallExpressionR) clause, 0, "arg1");
-			checkArgument((CallExpressionR) clause, 1, "arg2");
+//			assertThat(clause).isNotNull().isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isNotNull().isInstanceOf(CallExpression.class);
+			assertThat(((CallExpression) clause).type()).isEqualTo(CallExpression.Type.TERM_INFIX);
+			assertThat(((CallExpression) clause).name()).isEqualTo("AND");
+			assertThat(((CallExpression) clause).expressions()).hasSize(2);
+			checkArgument((CallExpression) clause, 0, "arg1");
+			checkArgument((CallExpression) clause, 1, "arg2");
 		}
 
 		public static void checkArgument(CallExpression clause, int index, String arg) {
-			assertThat(clause.expressions().get(index)).isInstanceOf(CompoundIdR.class);
+//			assertThat(clause.expressions().get(index)).isInstanceOf(CompoundIdR.class);
+			assertThat(clause.expressions().get(index)).isInstanceOf(CompoundId.class);
 			CompoundId compoundId = (CompoundId) (clause.expressions().get(index));
 			checkCompoundId(compoundId, 1, 0, arg);
 		}
@@ -364,12 +389,14 @@ class ExpressionTest {
 		@Test
 		void testNumericLiteral3() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("-10.25").parseExpression();
-			assertThat(clause).isInstanceOf(CallExpressionR.class);
+//			assertThat(clause).isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isInstanceOf(CallExpression.class);
 			CallExpression callExpression = (CallExpression) clause;
 			assertThat(callExpression.name()).isEqualTo("-");
 			assertThat(callExpression.type()).isEqualTo(CallExpression.Type.TERM_PREFIX);
 			assertThat(callExpression.expressions()).hasSize(1);
-			assertThat(callExpression.expressions().get(0)).isNotNull().isInstanceOf(NumericLiteralR.class);
+//			assertThat(callExpression.expressions().get(0)).isNotNull().isInstanceOf(NumericLiteralR.class);
+			assertThat(callExpression.expressions().get(0)).isNotNull().isInstanceOf(NumericLiteral.class);
 			NumericLiteral numericLiteral = (NumericLiteral) callExpression.expressions().get(0);
 			assertThat(numericLiteral.value()).isEqualTo(BigDecimal.valueOf(10.25));
 		}
@@ -400,7 +427,8 @@ class ExpressionTest {
 		@Test
 		void testSymbolLiteral() throws MdxParserException {
 			Expression clause = new MdxParserWrapper("cast(\"the_date\" as DATE)").parseExpression();
-			assertThat(clause).isInstanceOf(CallExpressionR.class);
+//			assertThat(clause).isInstanceOf(CallExpressionR.class);
+			assertThat(clause).isInstanceOf(CallExpression.class);
 			CallExpression callExpression = (CallExpression) clause;
 			assertThat(callExpression.name()).isEqualTo("CAST");
 			assertThat(callExpression.type()).isEqualTo(CallExpression.Type.CAST);

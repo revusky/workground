@@ -18,7 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.eclipse.daanse.mdx.model.api.SelectStatement;
 import org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier.Quoting;
-import org.eclipse.daanse.mdx.model.record.select.SelectSubcubeClauseNameR;
+//import org.eclipse.daanse.mdx.model.record.select.SelectSubcubeClauseNameR;
+import org.eclipse.daanse.mdx.model.api.select.SelectSubcubeClauseName;
 import org.eclipse.daanse.mdx.parser.api.MdxParserException;
 import org.eclipse.daanse.mdx.parser.cccx.MdxParserWrapper;
 import org.junit.jupiter.api.Nested;
@@ -39,7 +40,8 @@ class CubeTest {
 			SelectStatement selectStatement = new MdxParserWrapper(mdx).parseSelectStatement();
 			assertThat(selectStatement).isNotNull();
 			assertThat(selectStatement.selectSubcubeClause()).isNotNull()
-					.isInstanceOfSatisfying(SelectSubcubeClauseNameR.class, s -> {
+//					.isInstanceOfSatisfying(SelectSubcubeClauseNameR.class, s -> {
+					.isInstanceOfSatisfying(SelectSubcubeClauseName.class, s -> {
 						assertThat(s.cubeName()).isNotNull().satisfies(n -> {
 							assertThat(n.name()).isEqualTo(cubeName);
 							assertThat(n.quoting()).isEqualByComparingTo(Quoting.QUOTED);
@@ -67,7 +69,8 @@ class CubeTest {
 			SelectStatement selectStatement = new MdxParserWrapper(mdx).parseSelectStatement();
 			assertThat(selectStatement).isNotNull();
 			assertThat(selectStatement.selectSubcubeClause()).isNotNull()
-					.isInstanceOfSatisfying(SelectSubcubeClauseNameR.class, s -> {
+//					.isInstanceOfSatisfying(SelectSubcubeClauseNameR.class, s -> {
+					.isInstanceOfSatisfying(SelectSubcubeClauseName.class, s -> {
 						assertThat(s.cubeName()).isNotNull().satisfies(n -> {
 							assertThat(n.name()).isEqualTo(cubeName);
 							assertThat(n.quoting()).isEqualByComparingTo(Quoting.UNQUOTED);
