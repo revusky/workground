@@ -387,7 +387,15 @@ SelectQueryClause#interface :
    SelectQueryAsteriskClause
    |
    SelectQueryAxesClause
+   |
+   SelectQueryEmptyClause
 ;
+
+INJECT SelectQueryEmptyClause :
+       implements SelectQueryClause,
+                  org.eclipse.daanse.mdx.model.api.select.SelectQueryEmptyClause
+
+SelectQueryEmptyClause#(>=0) : {} ;
 
 INJECT SelectQueryAsteriskClause : implements SelectQueryClause, org.eclipse.daanse.mdx.model.api.select.SelectQueryAsteriskClause;
 
