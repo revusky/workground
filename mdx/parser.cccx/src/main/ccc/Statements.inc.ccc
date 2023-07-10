@@ -54,9 +54,11 @@ MdxStatement MdxStatement#interface :
   }
 ;
 
-INJECT MdxStatement : extends org.eclipse.daanse.mdx.model.api.MdxStatement;
+INJECT sealed MdxStatement : 
+   extends org.eclipse.daanse.mdx.model.api.MdxStatement
+   permits SelectStatement, DrillthroughStatement, ExplainStatement
 
-INJECT DrillthroughStatement :
+INJECT final DrillthroughStatement :
    import java.util.List;
    import java.util.Optional;
    implements MdxStatement, org.eclipse.daanse.mdx.model.api.DrillthroughStatement
@@ -102,8 +104,8 @@ DrillthroughStatement :
   )?
 ;
 
-INJECT ExplainStatement :
-   implements org.eclipse.daanse.mdx.model.api.ExplainStatement
+INJECT non-sealed ExplainStatement :
+   implements MdxStatement, org.eclipse.daanse.mdx.model.api.ExplainStatement
 {
     public MdxStatement mdxStatement() {
       return firstChildOfType(MdxStatement.class);
@@ -370,9 +372,7 @@ INJECT SelectSubcubeClauseStatement :
 SelectSubcubeClauseStatement :
   < LPAREN > 
   < SELECT >
-  (
-    SelectQueryClause
-  )?
+  SelectQueryClause
   < FROM > 
   SelectSubcubeClause
   (
@@ -403,7 +403,7 @@ SelectQueryAsteriskClause :
   < ASTERISK >
 ;
 
-INJECT SelectStatement :
+INJECT final SelectStatement :
    import java.util.List;
    import java.util.Optional;
    import org.eclipse.daanse.mdx.model.api.select.SelectWithClause;
