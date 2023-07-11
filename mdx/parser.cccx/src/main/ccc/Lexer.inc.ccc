@@ -384,4 +384,4 @@ INJECT NumericLiteral :
    }
 }
 
-INJECT NullLiteral : implements Literal, org.eclipse.daanse.mdx.model.api.expression.NullLiteral;
+INJECT final NullLiteral : implements Literal, org.eclipse.daanse.mdx.model.api.expression.NullLiteral;

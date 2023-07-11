@@ -39,7 +39,7 @@
 // <explainStatement> ::=
 //     EXPLAIN PLAN FOR ( <selectStatement> | <drillthroughStatement> )
 //
-MdxStatement MdxStatement#interface :
+MdxStatement MdxStatement :
   (
     SelectStatement
   	|
@@ -54,11 +54,11 @@ MdxStatement MdxStatement#interface :
   }
 ;
 
-INJECT sealed MdxStatement : 
+INJECT sealed interface MdxStatement : 
    extends org.eclipse.daanse.mdx.model.api.MdxStatement
    permits SelectStatement, DrillthroughStatement, ExplainStatement
 
-INJECT final DrillthroughStatement :
+INJECT final class DrillthroughStatement :
    import java.util.List;
    import java.util.Optional;
    implements MdxStatement, org.eclipse.daanse.mdx.model.api.DrillthroughStatement
@@ -104,13 +104,15 @@ DrillthroughStatement :
   )?
 ;
 
-INJECT non-sealed ExplainStatement :
+INJECT ExplainStatement :
    implements MdxStatement, org.eclipse.daanse.mdx.model.api.ExplainStatement
 {
     public MdxStatement mdxStatement() {
       return firstChildOfType(MdxStatement.class);
     }
 }
+
+INJECT non-sealed @SuppressWarnings("unused") ExplainStatement : {}
 
 ExplainStatement :
   < EXPLAIN > < PLAN> < FOR >
@@ -381,7 +383,7 @@ SelectSubcubeClauseStatement :
   < RPAREN >
 ;
 
-INJECT SelectQueryClause : extends org.eclipse.daanse.mdx.model.api.select.SelectQueryClause
+INJECT interface SelectQueryClause : extends org.eclipse.daanse.mdx.model.api.select.SelectQueryClause
 
 SelectQueryClause#interface : 
    SelectQueryAsteriskClause

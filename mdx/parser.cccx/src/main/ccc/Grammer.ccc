@@ -21,6 +21,7 @@ NODE_PACKAGE = org.eclipse.daanse.mdx.parser.cccx.tree;
 TABS_TO_SPACES = 4;
 ENSURE_FINAL_EOL;
 SMART_NODE_CREATION=false;
+MINIMAL_TOKEN;
 COPYRIGHT_BLURB="""
      *
      * Copyright (c) 2023 Contributors to the Eclipse Foundation.

@@ -39,7 +39,7 @@ Expression#interface :
 
 INJECT interface ObjectIdentifier : extends Expression, org.eclipse.daanse.mdx.model.api.expression.ObjectIdentifier
 
-ObjectIdentifier#interface :
+ObjectIdentifier :
   NameObjectIdentifier
   |
   KeyObjectIdentifier
